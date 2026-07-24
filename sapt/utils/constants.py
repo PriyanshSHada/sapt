@@ -21,7 +21,12 @@ def _state_root(env_name: str, default: Path, fallback_name: str) -> Path:
         probe.unlink(missing_ok=True)
         return candidate
     except OSError:
-        fallback = Path(tempfile.gettempdir()) / "sapt-state" / str(os.getuid()) / fallback_name
+        fallback = (
+            Path(tempfile.gettempdir())
+            / "sapt-state"
+            / str(os.getuid())
+            / fallback_name
+        )
         fallback.mkdir(parents=True, exist_ok=True)
         return fallback
 

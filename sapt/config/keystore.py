@@ -8,6 +8,8 @@ not stored in plain text, while avoiding desktop keyring dependencies.
 import base64
 import hashlib
 import getpass
+import os
+import keyring
 
 from cryptography.fernet import Fernet, InvalidToken
 
@@ -21,14 +23,37 @@ class KeyStore:
         self._fernet = Fernet(self._derive_key())
 
     def encrypt(self, api_key: str) -> str:
-        """Encrypt an API key and return base64-encoded ciphertext."""
-        return self._fernet.encrypt(api_key.encode()).decode()
+        """Encrypt an API key and return base64-encoded ciphertext, or store in OS keyring."""
+        try:
+            keyring.set_password("sapt", "api_key", api_key)
+            return "stored_in_os_keyring"
+        except Exception:
+            # Fallback to Fernet encryption
+            return self._fernet.encrypt(api_key.encode()).decode()
 
     def decrypt(self, encrypted: str) -> str:
-        """Decrypt an encrypted API key.
+        """Decrypt an encrypted API key or retrieve from OS keyring.
 
         Returns the plain-text key, or raises ValueError if decryption fails.
         """
+        if encrypted == "stored_in_os_keyring":
+            try:
+                pw = keyring.get_password("sapt", "api_key")
+                if pw:
+                    return pw
+            except Exception:
+                pass
+            
+            # Fallback to environment variable if keyring fails
+            env_key = os.environ.get("SAPT_API_KEY")
+            if env_key:
+                return env_key
+                
+            raise ValueError(
+                "API key was stored in OS keyring but could not be retrieved. "
+                "You can provide it via SAPT_API_KEY env var, or run 'sapt config --reset'."
+            )
+
         try:
             return self._fernet.decrypt(encrypted.encode()).decode()
         except InvalidToken:

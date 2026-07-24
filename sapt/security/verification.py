@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 @dataclass
 class VerificationResult:
     """Result of a package verification check."""
+
     tier: int = 1
     signed: bool = False
     checksum_ok: bool = False
@@ -21,11 +22,11 @@ class PackageVerifier:
     """Verify package trust and integrity."""
 
     SOURCE_TIERS = {
-        "apt": 1,       # 🟢 Official distro repo
-        "snap": 2,      # 🟡 Snap Store
-        "flatpak": 2,   # 🟡 Flathub
-        "ppa": 3,       # 🟠 Third-party PPA
-        "github": 4,    # 🔴 GitHub / unverified
+        "apt": 1,  # 🟢 Official distro repo
+        "snap": 2,  # 🟡 Snap Store
+        "flatpak": 2,  # 🟡 Flathub
+        "ppa": 3,  # 🟠 Third-party PPA
+        "github": 4,  # 🔴 GitHub / unverified
     }
 
     def verify(self, package: str, source: str) -> VerificationResult:

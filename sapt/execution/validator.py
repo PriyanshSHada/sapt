@@ -11,6 +11,7 @@ from sapt.utils.constants import ALLOWED_COMMAND_PREFIXES, FORBIDDEN_CHARS
 
 class SecurityViolation(Exception):
     """Raised when a command fails allowlist validation."""
+
     pass
 
 
@@ -41,7 +42,7 @@ class CommandValidator:
         except ValueError as error:
             raise SecurityViolation(f"Malformed command: {error}") from error
         if not any(
-            tokens[:len(prefix_tokens)] == prefix_tokens
+            tokens[: len(prefix_tokens)] == prefix_tokens
             for prefix in ALLOWED_COMMAND_PREFIXES
             for prefix_tokens in [shlex.split(prefix)]
         ):
@@ -54,7 +55,7 @@ class CommandValidator:
 
     def validate_package_name(self, name: str) -> bool:
         """Validate a package name contains only safe characters."""
-        if not re.match(r'^[a-z0-9][a-z0-9.+\-:]*$', name):
+        if not re.match(r"^[a-z0-9][a-z0-9.+\-:]*$", name):
             raise SecurityViolation(
                 f"Invalid package name: {name}\n"
                 f"Package names may only contain lowercase letters, "
@@ -64,7 +65,7 @@ class CommandValidator:
 
     def validate_version(self, version: str) -> bool:
         """Validate an APT version string used in package=version syntax."""
-        if not re.match(r'^[A-Za-z0-9.+:~\-]+$', version):
+        if not re.match(r"^[A-Za-z0-9.+:~\-]+$", version):
             raise SecurityViolation(
                 f"Invalid package version: {version}\n"
                 "Versions may only contain letters, digits, dots, plus, colon, tilde, and hyphen."
@@ -73,7 +74,7 @@ class CommandValidator:
 
     def validate_snap_name(self, name: str) -> bool:
         """Validate a Snap package name."""
-        if not re.match(r'^[a-z0-9][a-z0-9-]{0,39}$', name):
+        if not re.match(r"^[a-z0-9][a-z0-9-]{0,39}$", name):
             raise SecurityViolation(
                 f"Invalid snap name: {name}\n"
                 "Snap names may only contain lowercase letters, digits, and hyphens."
@@ -82,7 +83,7 @@ class CommandValidator:
 
     def validate_flatpak_id(self, app_id: str) -> bool:
         """Validate a Flatpak application ID such as org.mozilla.firefox."""
-        if not re.match(r'^[A-Za-z0-9][A-Za-z0-9._-]{1,127}$', app_id):
+        if not re.match(r"^[A-Za-z0-9][A-Za-z0-9._-]{1,127}$", app_id):
             raise SecurityViolation(
                 f"Invalid flatpak application ID: {app_id}\n"
                 "Flatpak IDs may only contain letters, digits, dots, underscores, and hyphens."

@@ -3,7 +3,6 @@ sapt.ui.display
 Rich terminal output — banners, panels, tables, spinners, and formatted messages.
 """
 
-import sys
 from contextlib import contextmanager
 
 from rich.console import Console
@@ -15,9 +14,13 @@ from rich import box
 
 from sapt import __version__
 from sapt.ui.themes import (
-    SAPT_THEME, BANNER, BANNER_MINI, ICONS, TIER_STYLES, COLORS,
+    SAPT_THEME,
+    BANNER,
+    BANNER_MINI,
+    ICONS,
+    TIER_STYLES,
+    COLORS,
 )
-
 
 # ── Global Console Instance ──────────────────────────────────────
 console = Console(theme=SAPT_THEME, highlight=False)
@@ -53,27 +56,19 @@ class Display:
 
     def success(self, message: str):
         """Green success message."""
-        self.console.print(
-            f"  [sapt.success]{ICONS['success']}[/] {message}"
-        )
+        self.console.print(f"  [sapt.success]{ICONS['success']}[/] {message}")
 
     def error(self, message: str):
         """Red error message."""
-        self.console.print(
-            f"  [sapt.error]{ICONS['error']}[/] {message}"
-        )
+        self.console.print(f"  [sapt.error]{ICONS['error']}[/] {message}")
 
     def warning(self, message: str):
         """Yellow warning message."""
-        self.console.print(
-            f"  [sapt.warning]{ICONS['warning']}[/] {message}"
-        )
+        self.console.print(f"  [sapt.warning]{ICONS['warning']}[/] {message}")
 
     def info(self, message: str):
         """Blue info message."""
-        self.console.print(
-            f"  [sapt.info]{ICONS['info']}[/] {message}"
-        )
+        self.console.print(f"  [sapt.info]{ICONS['info']}[/] {message}")
 
     def muted(self, message: str):
         """Gray muted/debug message."""
@@ -91,8 +86,13 @@ class Display:
         table.add_column("Value")
 
         table.add_row("Package", f"[sapt.package]{resolution['package']}[/]")
-        table.add_row("Source", f"{tier_info['icon']} {resolution['source']} ({tier_info['label']})")
-        table.add_row("Confidence", self._confidence_bar(resolution.get("confidence", 0)))
+        table.add_row(
+            "Source",
+            f"{tier_info['icon']} {resolution['source']} ({tier_info['label']})",
+        )
+        table.add_row(
+            "Confidence", self._confidence_bar(resolution.get("confidence", 0))
+        )
 
         if resolution.get("version"):
             table.add_row("Version", resolution["version"])
@@ -169,7 +169,9 @@ class Display:
         table.add_column("Status")
 
         for i, entry in enumerate(entries, 1):
-            status = "[sapt.success]✓[/]" if entry.get("success") else "[sapt.error]✗[/]"
+            status = (
+                "[sapt.success]✓[/]" if entry.get("success") else "[sapt.error]✗[/]"
+            )
             table.add_row(
                 str(i),
                 entry.get("timestamp", "")[:19],
@@ -194,9 +196,9 @@ class Display:
             score_style = "sapt.error"
 
         content = Text()
-        content.append(f"\n  Health Score: ", style="bold")
+        content.append("\n  Health Score: ", style="bold")
         content.append(f"{score}/100", style=score_style)
-        content.append(f"\n\n")
+        content.append("\n\n")
 
         for check, status in report.get("checks", {}).items():
             icon = ICONS["success"] if status["ok"] else ICONS["warning"]

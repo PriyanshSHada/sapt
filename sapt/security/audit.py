@@ -11,10 +11,11 @@ import json
 import uuid
 import hashlib
 import getpass
+import fcntl
 from datetime import datetime, timezone
 from pathlib import Path
 
-from sapt.utils.constants import AUDIT_LOG, DATA_DIR
+from sapt.utils.constants import AUDIT_LOG
 from sapt.utils.system import ensure_directories
 
 
@@ -42,8 +43,6 @@ class AuditLogger:
 
         Returns the logged entry dict.
         """
-        prev_hash = self._get_last_hash()
-
         entry = {
             "id": str(uuid.uuid4())[:8],
             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -57,15 +56,27 @@ class AuditLogger:
             "success": success,
             "command": command,
             "details": details,
-            "prev_hash": prev_hash,
         }
 
-        # Compute this entry's hash
-        entry["hash"] = self._compute_hash(entry)
-
-        # Append to log
-        with open(self.log_path, "a") as f:
-            f.write(json.dumps(entry) + "\n")
+        # Use a lock file to ensure atomic read-modify-write for the hash chain
+        lock_path = self.log_path.with_suffix(".log.lock")
+        
+        with open(lock_path, "w") as lock_file:
+            fcntl.flock(lock_file, fcntl.LOCK_EX)
+            try:
+                # 1. Safely read previous hash while locked
+                prev_hash = self._get_last_hash()
+                entry["prev_hash"] = prev_hash
+                
+                # 2. Compute this entry's hash
+                entry["hash"] = self._compute_hash(entry)
+                
+                # 3. Append to log
+                with open(self.log_path, "a") as f:
+                    f.write(json.dumps(entry) + "\n")
+                    f.flush()
+            finally:
+                fcntl.flock(lock_file, fcntl.LOCK_UN)
 
         return entry
 
@@ -144,7 +155,10 @@ class AuditLogger:
             # Verify the first link and every subsequent chain link.
             if i == 0:
                 if entry.get("prev_hash") != "genesis":
-                    return False, "Audit log genesis entry has an invalid previous hash."
+                    return (
+                        False,
+                        "Audit log genesis entry has an invalid previous hash.",
+                    )
             else:
                 prev_entry = entries[i - 1]
                 expected_prev_hash = prev_entry.get("hash", "")
@@ -155,7 +169,10 @@ class AuditLogger:
                         f"Previous hash mismatch."
                     )
 
-        return True, f"Audit log integrity verified. {len(entries)} entries, chain intact."
+        return (
+            True,
+            f"Audit log integrity verified. {len(entries)} entries, chain intact.",
+        )
 
     def entry_count(self) -> int:
         """Get the total number of entries."""

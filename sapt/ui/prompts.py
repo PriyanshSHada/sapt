@@ -6,22 +6,23 @@ Interactive confirmation prompts and "did you mean" suggestions.
 import questionary
 from questionary import Style
 
-from sapt.ui.themes import TIER_STYLES, ICONS, COLORS
+from sapt.ui.themes import TIER_STYLES, ICONS
 from sapt.ui.display import Display
 
-
 # ── Questionary Style ────────────────────────────────────────────
-PROMPT_STYLE = Style([
-    ("qmark", "fg:#7C3AED bold"),
-    ("question", "fg:white bold"),
-    ("answer", "fg:#06B6D4 bold"),
-    ("pointer", "fg:#7C3AED bold"),
-    ("highlighted", "fg:#7C3AED bold"),
-    ("selected", "fg:#06B6D4"),
-    ("separator", "fg:#6B7280"),
-    ("instruction", "fg:#6B7280"),
-    ("text", "fg:white"),
-])
+PROMPT_STYLE = Style(
+    [
+        ("qmark", "fg:#7C3AED bold"),
+        ("question", "fg:white bold"),
+        ("answer", "fg:#06B6D4 bold"),
+        ("pointer", "fg:#7C3AED bold"),
+        ("highlighted", "fg:#7C3AED bold"),
+        ("selected", "fg:#06B6D4"),
+        ("separator", "fg:#6B7280"),
+        ("instruction", "fg:#6B7280"),
+        ("text", "fg:white"),
+    ]
+)
 
 
 def confirm_install(
@@ -41,14 +42,18 @@ def confirm_install(
     tier_info = TIER_STYLES.get(tier, TIER_STYLES[4])
 
     d.console.print()
-    d.console.print(f"  ┌─────────────────────────────────────────────┐")
-    d.console.print(f"  │  Install [bold cyan]{package}[/] {'v' + version if version else ''}?")
-    d.console.print(f"  │")
-    d.console.print(f"  │  Source:   {tier_info['icon']} {source} ({tier_info['label']})")
+    d.console.print("  ┌─────────────────────────────────────────────┐")
+    d.console.print(
+        f"  │  Install [bold cyan]{package}[/] {'v' + version if version else ''}?"
+    )
+    d.console.print("  │")
+    d.console.print(
+        f"  │  Source:   {tier_info['icon']} {source} ({tier_info['label']})"
+    )
     d.console.print(f"  │  Size:     {ICONS['disk']} {size}")
     d.console.print(f"  │  Security: {ICONS['shield']} {cve_status}")
-    d.console.print(f"  │")
-    d.console.print(f"  └─────────────────────────────────────────────┘")
+    d.console.print("  │")
+    d.console.print("  └─────────────────────────────────────────────┘")
     d.console.print()
 
     # For tier 4 (unverified), show extra warning
@@ -135,9 +140,7 @@ def did_you_mean(
     d = display or Display()
 
     d.console.print()
-    d.warning(
-        f"Package [bold cyan]{original}[/] not found."
-    )
+    d.warning(f"Package [bold cyan]{original}[/] not found.")
 
     if not suggestions:
         d.error("No similar packages found.")

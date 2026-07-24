@@ -112,7 +112,10 @@ class UsageTracker:
             "failures": int(calls or 0) - int(successes or 0),
             "estimated_spend_usd": round(float(spend or 0.0), 6),
             "by_provider": {
-                provider: {"calls": int(count), "estimated_spend_usd": round(float(cost), 6)}
+                provider: {
+                    "calls": int(count),
+                    "estimated_spend_usd": round(float(cost), 6),
+                }
                 for provider, count, cost in by_provider
             },
         }

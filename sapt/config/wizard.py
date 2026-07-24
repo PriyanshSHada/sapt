@@ -12,20 +12,21 @@ from sapt.ui.themes import ICONS
 from sapt.config.manager import ConfigManager
 from sapt.utils.constants import PROVIDER_CONFIGS
 
-
 # ── Wizard Prompt Style ──────────────────────────────────────────
-WIZARD_STYLE = Style([
-    ("qmark", "fg:#7C3AED bold"),
-    ("question", "fg:white bold"),
-    ("answer", "fg:#06B6D4 bold"),
-    ("pointer", "fg:#7C3AED bold"),
-    ("highlighted", "fg:#7C3AED bold"),
-    ("selected", "fg:#06B6D4"),
-    ("separator", "fg:#6B7280"),
-    ("instruction", "fg:#6B7280"),
-    ("text", "fg:white"),
-    ("disabled", "fg:#6B7280 italic"),
-])
+WIZARD_STYLE = Style(
+    [
+        ("qmark", "fg:#7C3AED bold"),
+        ("question", "fg:white bold"),
+        ("answer", "fg:#06B6D4 bold"),
+        ("pointer", "fg:#7C3AED bold"),
+        ("highlighted", "fg:#7C3AED bold"),
+        ("selected", "fg:#06B6D4"),
+        ("separator", "fg:#6B7280"),
+        ("instruction", "fg:#6B7280"),
+        ("text", "fg:white"),
+        ("disabled", "fg:#6B7280 italic"),
+    ]
+)
 
 
 class SetupWizard:
@@ -46,8 +47,8 @@ class SetupWizard:
             f"Let's set up your AI provider.\n"
         )
         self.display.console.print(
-            f"  [dim]This is a one-time setup. You can change it anytime "
-            f"with [bold]sapt config[/].[/]\n"
+            "  [dim]This is a one-time setup. You can change it anytime "
+            "with [bold]sapt config[/].[/]\n"
         )
 
         # Step 1: Select provider
@@ -94,9 +95,7 @@ class SetupWizard:
             f"Config saved to [dim]{self.config_manager.exists() and '~/.config/sapt/config.json'}[/]"
         )
         self.display.console.print()
-        self.display.info(
-            "You're all set! Try: [bold]sapt install nmap[/]"
-        )
+        self.display.info("You're all set! Try: [bold]sapt install nmap[/]")
         self.display.console.print()
 
         return config
@@ -169,7 +168,11 @@ class SetupWizard:
         endpoint = questionary.text(
             "Enter API endpoint URL:",
             style=WIZARD_STYLE,
-            validate=lambda x: True if x.startswith(("http://", "https://")) else "Must start with http:// or https://",
+            validate=lambda x: (
+                True
+                if x.startswith(("http://", "https://"))
+                else "Must start with http:// or https://"
+            ),
         ).ask()
         if not endpoint:
             return None

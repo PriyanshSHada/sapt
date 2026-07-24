@@ -20,6 +20,7 @@ from sapt.utils.system import is_interactive
 @dataclass
 class ExecutionResult:
     """Result of a command execution."""
+
     success: bool
     package: str
     command: str
@@ -54,19 +55,26 @@ class Executor:
         """Execute a package install from a resolution."""
         package = resolution.package
         requested_version = resolution.requested_version
-        install_target = f"{package}={requested_version}" if requested_version else package
+        install_target = (
+            f"{package}={requested_version}" if requested_version else package
+        )
         command = f"apt install -y {install_target}"
 
         if resolution.source != "apt":
             if resolution.source in {"snap", "flatpak"}:
-                return self._install_store(resolution, dry_run=dry_run, auto_yes=auto_yes)
+                return self._install_store(
+                    resolution, dry_run=dry_run, auto_yes=auto_yes
+                )
             message = (
                 f"Source '{resolution.source}' is not supported by this build. "
                 "Only apt, snap, and flatpak packages can be installed currently."
             )
             self.display.error(message)
             return ExecutionResult(
-                success=False, package=package, command="", output=message,
+                success=False,
+                package=package,
+                command="",
+                output=message,
                 source=resolution.source,
             )
 
@@ -84,8 +92,10 @@ class Executor:
         except SecurityViolation as e:
             self.display.error(str(e))
             return ExecutionResult(
-                success=False, package=package,
-                command=command, output=str(e),
+                success=False,
+                package=package,
+                command=command,
+                output=str(e),
             )
 
         # Check if already installed
@@ -96,8 +106,10 @@ class Executor:
                     f"[sapt.package]{package}[/] {version or ''} is already installed."
                 )
                 return ExecutionResult(
-                    success=True, package=package,
-                    command="(already installed)", return_code=0,
+                    success=True,
+                    package=package,
+                    command="(already installed)",
+                    return_code=0,
                 )
 
         # Get size info
@@ -107,18 +119,21 @@ class Executor:
         resolution.version = version
 
         # Show resolution
-        self.display.show_resolution({
-            "package": package,
-            "source": resolution.source,
-            "confidence": resolution.confidence,
-            "trust_tier": resolution.trust_tier,
-            "version": version,
-            "size": size,
-            "notes": resolution.notes,
-        })
+        self.display.show_resolution(
+            {
+                "package": package,
+                "source": resolution.source,
+                "confidence": resolution.confidence,
+                "trust_tier": resolution.trust_tier,
+                "version": version,
+                "size": size,
+                "notes": resolution.notes,
+            }
+        )
 
         # CVE Scan
         from sapt.security.vulnerabilities import VulnerabilityScanner
+
         scanner = VulnerabilityScanner()
         with self.display.spinner(f"Checking OSV CVE database for {package}..."):
             cve_report = scanner.scan(package, version=version)
@@ -131,7 +146,9 @@ class Executor:
             for vuln in cve_report.vulnerabilities[:3]:
                 self.display.warning(f"  - {vuln.id} ({vuln.severity})")
             if len(cve_report.vulnerabilities) > 3:
-                self.display.warning(f"  - ... and {len(cve_report.vulnerabilities) - 3} more.")
+                self.display.warning(
+                    f"  - ... and {len(cve_report.vulnerabilities) - 3} more."
+                )
         self.display.console.print()
 
         # Dry run — stop here
@@ -141,7 +158,8 @@ class Executor:
                 f"Would run: [bold]sudo {command}[/]"
             )
             return ExecutionResult(
-                success=True, package=package,
+                success=True,
+                package=package,
                 command=f"sudo {command} (dry-run)",
             )
 
@@ -151,7 +169,10 @@ class Executor:
                 message = "Confirmation required in a non-interactive session. Use --yes or --dry-run."
                 self.display.error(message)
                 return ExecutionResult(
-                    success=False, package=package, command=command, output=message,
+                    success=False,
+                    package=package,
+                    command=command,
+                    output=message,
                 )
             confirmed = prompts.confirm_install(
                 package=package,
@@ -164,8 +185,10 @@ class Executor:
             if not confirmed:
                 self.display.warning("Installation cancelled.")
                 return ExecutionResult(
-                    success=False, package=package,
-                    command=command, output="Cancelled by user.",
+                    success=False,
+                    package=package,
+                    command=command,
+                    output="Cancelled by user.",
                 )
 
         # Execute
@@ -177,12 +200,14 @@ class Executor:
             duration = time.time() - start
 
             self.display.console.print()
-            self.display.show_install_summary({
-                "package": package,
-                "source": resolution.source,
-                "duration": duration,
-                "run_command": package,
-            })
+            self.display.show_install_summary(
+                {
+                    "package": package,
+                    "source": resolution.source,
+                    "duration": duration,
+                    "run_command": package,
+                }
+            )
 
             # Post-install hints
             if resolution.notes:
@@ -190,9 +215,13 @@ class Executor:
                 self.display.console.print()
 
             return ExecutionResult(
-                success=True, package=package, command=f"sudo {command}",
-                output=result.stdout, return_code=result.returncode,
-                duration=duration, source=resolution.source,
+                success=True,
+                package=package,
+                command=f"sudo {command}",
+                output=result.stdout,
+                return_code=result.returncode,
+                duration=duration,
+                source=resolution.source,
             )
 
         except AptError as e:
@@ -200,8 +229,12 @@ class Executor:
             self.display.console.print()
             self.display.error(f"Installation failed: {e}")
             return ExecutionResult(
-                success=False, package=package, command=f"sudo {command}",
-                output=str(e), return_code=1, duration=duration,
+                success=False,
+                package=package,
+                command=f"sudo {command}",
+                output=str(e),
+                return_code=1,
+                duration=duration,
             )
 
     def _install_store(
@@ -234,25 +267,35 @@ class Executor:
         except SecurityViolation as e:
             self.display.error(str(e))
             return ExecutionResult(
-                success=False, package=package, command=command,
-                output=str(e), source=source,
+                success=False,
+                package=package,
+                command=command,
+                output=str(e),
+                source=source,
             )
 
-        self.display.show_resolution({
-            "package": package,
-            "source": source,
-            "confidence": resolution.confidence,
-            "trust_tier": resolution.trust_tier,
-            "version": resolution.version,
-            "size": resolution.size or "unknown",
-            "notes": resolution.notes or verification.details,
-        })
+        self.display.show_resolution(
+            {
+                "package": package,
+                "source": source,
+                "confidence": resolution.confidence,
+                "trust_tier": resolution.trust_tier,
+                "version": resolution.version,
+                "size": resolution.size or "unknown",
+                "notes": resolution.notes or verification.details,
+            }
+        )
 
         # CVE Scan
         from sapt.security.vulnerabilities import VulnerabilityScanner
+
         scanner = VulnerabilityScanner()
         with self.display.spinner(f"Checking OSV CVE database for {package}..."):
-            cve_report = scanner.scan(package, version=resolution.version, ecosystem="Debian" if source != "snap" else "Snap")
+            cve_report = scanner.scan(
+                package,
+                version=resolution.version,
+                ecosystem="Debian" if source != "snap" else "Snap",
+            )
         if not cve_report.ok:
             self.display.warning(f"CVE lookup failed: {cve_report.error}")
         elif cve_report.vulnerable:
@@ -262,7 +305,9 @@ class Executor:
             for vuln in cve_report.vulnerabilities[:3]:
                 self.display.warning(f"  - {vuln.id} ({vuln.severity})")
             if len(cve_report.vulnerabilities) > 3:
-                self.display.warning(f"  - ... and {len(cve_report.vulnerabilities) - 3} more.")
+                self.display.warning(
+                    f"  - ... and {len(cve_report.vulnerabilities) - 3} more."
+                )
         self.display.console.print()
 
         sudo_prefix = "sudo " if source == "snap" else ""
@@ -272,22 +317,32 @@ class Executor:
                 f"Would run: [bold]{sudo_prefix}{command}[/]"
             )
             return ExecutionResult(
-                success=True, package=package,
-                command=f"{sudo_prefix}{command} (dry-run)", source=source,
+                success=True,
+                package=package,
+                command=f"{sudo_prefix}{command} (dry-run)",
+                source=source,
             )
 
         try:
             if backend.is_installed(package):
-                self.display.success(f"[sapt.package]{package}[/] is already installed.")
+                self.display.success(
+                    f"[sapt.package]{package}[/] is already installed."
+                )
                 return ExecutionResult(
-                    success=True, package=package,
-                    command="(already installed)", source=source,
+                    success=True,
+                    package=package,
+                    command="(already installed)",
+                    source=source,
                 )
         except StoreBackendError as e:
             self.display.error(str(e))
             return ExecutionResult(
-                success=False, package=package, command=command,
-                output=str(e), return_code=1, source=source,
+                success=False,
+                package=package,
+                command=command,
+                output=str(e),
+                return_code=1,
+                source=source,
             )
 
         if not auto_yes:
@@ -295,8 +350,11 @@ class Executor:
                 message = "Confirmation required in a non-interactive session. Use --yes or --dry-run."
                 self.display.error(message)
                 return ExecutionResult(
-                    success=False, package=package,
-                    command=command, output=message, source=source,
+                    success=False,
+                    package=package,
+                    command=command,
+                    output=message,
+                    source=source,
                 )
             confirmed = prompts.confirm_install(
                 package=package,
@@ -309,8 +367,11 @@ class Executor:
             if not confirmed:
                 self.display.warning("Installation cancelled.")
                 return ExecutionResult(
-                    success=False, package=package,
-                    command=command, output="Cancelled by user.", source=source,
+                    success=False,
+                    package=package,
+                    command=command,
+                    output="Cancelled by user.",
+                    source=source,
                 )
 
         start = time.time()
@@ -319,24 +380,35 @@ class Executor:
                 result = backend.install(package)
             duration = time.time() - start
             self.display.console.print()
-            self.display.show_install_summary({
-                "package": package,
-                "source": source,
-                "duration": duration,
-                "run_command": package,
-            })
+            self.display.show_install_summary(
+                {
+                    "package": package,
+                    "source": source,
+                    "duration": duration,
+                    "run_command": package,
+                }
+            )
             return ExecutionResult(
-                success=True, package=package, command=f"{sudo_prefix}{command}",
-                output=result.stdout, return_code=result.returncode,
-                duration=duration, source=source,
+                success=True,
+                package=package,
+                command=f"{sudo_prefix}{command}",
+                output=result.stdout,
+                return_code=result.returncode,
+                duration=duration,
+                source=source,
             )
         except StoreBackendError as e:
             duration = time.time() - start
             self.display.console.print()
             self.display.error(f"Installation failed: {e}")
             return ExecutionResult(
-                success=False, package=package, command=f"{sudo_prefix}{command}",
-                output=str(e), return_code=1, duration=duration, source=source,
+                success=False,
+                package=package,
+                command=f"{sudo_prefix}{command}",
+                output=str(e),
+                return_code=1,
+                duration=duration,
+                source=source,
             )
 
     def remove(
@@ -356,15 +428,20 @@ class Executor:
         except SecurityViolation as e:
             self.display.error(str(e))
             return ExecutionResult(
-                success=False, package=package, command=command, output=str(e),
+                success=False,
+                package=package,
+                command=command,
+                output=str(e),
             )
 
         # Check if installed
         if not self.apt.is_installed(package):
             self.display.warning(f"[sapt.package]{package}[/] is not installed.")
             return ExecutionResult(
-                success=False, package=package,
-                command=command, output="Not installed.",
+                success=False,
+                package=package,
+                command=command,
+                output="Not installed.",
             )
 
         # Check reverse dependencies
@@ -376,7 +453,8 @@ class Executor:
                 f"Would run: [bold]sudo {command}[/]"
             )
             return ExecutionResult(
-                success=True, package=package,
+                success=True,
+                package=package,
                 command=f"sudo {command} (dry-run)",
             )
 
@@ -385,7 +463,10 @@ class Executor:
                 message = "Confirmation required in a non-interactive session. Use --yes or --dry-run."
                 self.display.error(message)
                 return ExecutionResult(
-                    success=False, package=package, command=command, output=message,
+                    success=False,
+                    package=package,
+                    command=command,
+                    output=message,
                 )
             confirmed = prompts.confirm_remove(
                 package=package,
@@ -395,8 +476,10 @@ class Executor:
             if not confirmed:
                 self.display.warning("Removal cancelled.")
                 return ExecutionResult(
-                    success=False, package=package,
-                    command=command, output="Cancelled by user.",
+                    success=False,
+                    package=package,
+                    command=command,
+                    output="Cancelled by user.",
                 )
 
         start = time.time()
@@ -412,8 +495,11 @@ class Executor:
             self.display.show_remove_summary(package)
 
             return ExecutionResult(
-                success=True, package=package, command=f"sudo {command}",
-                output=result.stdout, return_code=result.returncode,
+                success=True,
+                package=package,
+                command=f"sudo {command}",
+                output=result.stdout,
+                return_code=result.returncode,
                 duration=duration,
             )
 
@@ -421,8 +507,12 @@ class Executor:
             duration = time.time() - start
             self.display.error(f"Removal failed: {e}")
             return ExecutionResult(
-                success=False, package=package, command=f"sudo {command}",
-                output=str(e), return_code=1, duration=duration,
+                success=False,
+                package=package,
+                command=f"sudo {command}",
+                output=str(e),
+                return_code=1,
+                duration=duration,
             )
 
     def update(self) -> ExecutionResult:
@@ -434,30 +524,43 @@ class Executor:
             duration = time.time() - start
             self.display.success(f"Package lists updated. ({duration:.1f}s)")
             return ExecutionResult(
-                success=True, package="", command="sudo apt update",
-                output=result.stdout, duration=duration,
+                success=True,
+                package="",
+                command="sudo apt update",
+                output=result.stdout,
+                duration=duration,
             )
         except AptError as e:
             self.display.error(f"Update failed: {e}")
             return ExecutionResult(
-                success=False, package="", command="sudo apt update",
-                output=str(e), return_code=1,
+                success=False,
+                package="",
+                command="sudo apt update",
+                output=str(e),
+                return_code=1,
             )
 
     def upgrade(self, auto_yes: bool = False) -> ExecutionResult:
         """Run apt upgrade."""
         if not auto_yes:
             if not is_interactive():
-                message = "Confirmation required in a non-interactive session. Use --yes."
+                message = (
+                    "Confirmation required in a non-interactive session. Use --yes."
+                )
                 self.display.error(message)
                 return ExecutionResult(
-                    success=False, package="", command="sudo apt upgrade", output=message,
+                    success=False,
+                    package="",
+                    command="sudo apt upgrade",
+                    output=message,
                 )
             confirmed = prompts.confirm_upgrade([], display=self.display)
             if not confirmed:
                 self.display.warning("Upgrade cancelled.")
                 return ExecutionResult(
-                    success=False, package="", command="sudo apt upgrade",
+                    success=False,
+                    package="",
+                    command="sudo apt upgrade",
                     output="Cancelled.",
                 )
 
@@ -468,12 +571,18 @@ class Executor:
             duration = time.time() - start
             self.display.success(f"System upgraded. ({duration:.1f}s)")
             return ExecutionResult(
-                success=True, package="", command="sudo apt upgrade -y",
-                output=result.stdout, duration=duration,
+                success=True,
+                package="",
+                command="sudo apt upgrade -y",
+                output=result.stdout,
+                duration=duration,
             )
         except AptError as e:
             self.display.error(f"Upgrade failed: {e}")
             return ExecutionResult(
-                success=False, package="", command="sudo apt upgrade",
-                output=str(e), return_code=1,
+                success=False,
+                package="",
+                command="sudo apt upgrade",
+                output=str(e),
+                return_code=1,
             )

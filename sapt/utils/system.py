@@ -8,7 +8,6 @@ import shutil
 import getpass
 import platform
 import subprocess
-from pathlib import Path
 
 from sapt.utils.constants import CONFIG_DIR, CACHE_DIR, DATA_DIR
 

@@ -28,7 +28,9 @@ class FuzzyMatcher:
             self._packages = self._load_index()
         return self._packages
 
-    def match(self, query: str, limit: int = 5, threshold: int = 60) -> list[tuple[str, int]]:
+    def match(
+        self, query: str, limit: int = 5, threshold: int = 60
+    ) -> list[tuple[str, int]]:
         """Find packages matching the query.
 
         Returns list of (package_name, score) sorted by score descending.
@@ -70,11 +72,9 @@ class FuzzyMatcher:
             if result.returncode != 0:
                 return 0
 
-            packages = sorted(set(
-                line.strip()
-                for line in result.stdout.splitlines()
-                if line.strip()
-            ))
+            packages = sorted(
+                set(line.strip() for line in result.stdout.splitlines() if line.strip())
+            )
 
             with open(self.index_path, "w") as f:
                 f.write("\n".join(packages))
@@ -89,9 +89,7 @@ class FuzzyMatcher:
         """Load package names from the cached index file."""
         if self.index_path.is_file():
             with open(self.index_path) as f:
-                packages = [
-                    line.strip() for line in f if line.strip()
-                ]
+                packages = [line.strip() for line in f if line.strip()]
                 if packages:
                     return packages
 

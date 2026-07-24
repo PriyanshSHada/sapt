@@ -7,8 +7,11 @@ Also validates AI response JSON against expected schema.
 import re
 import json
 
-from sapt.utils.constants import MAX_INPUT_LEN, VALID_ACTIONS, VALID_SOURCES, VALID_PKG_NAME_PATTERN
-
+from sapt.utils.constants import (
+    MAX_INPUT_LEN,
+    VALID_SOURCES,
+    VALID_PKG_NAME_PATTERN,
+)
 
 # ── Suspicious Patterns (prompt injection attempts) ──────────────
 SUSPICIOUS_PATTERNS = [
@@ -23,11 +26,11 @@ SUSPICIOUS_PATTERNS = [
     r"pretend\s+to\s+be",
     r"execute\s+command",
     r"run\s+command",
-    r"```",        # Code fence attempts
-    r"---\s*\n",   # Markdown separator attempts
-    r"\{\{",       # Template injection
-    r"<script",    # XSS-style injection
-    r";\s*rm\s",   # Shell command injection
+    r"```",  # Code fence attempts
+    r"---\s*\n",  # Markdown separator attempts
+    r"\{\{",  # Template injection
+    r"<script",  # XSS-style injection
+    r";\s*rm\s",  # Shell command injection
     r"&&\s*rm\s",
     r"\|\s*bash",
     r"curl\s.*\|\s*sh",
@@ -41,11 +44,13 @@ _COMPILED_PATTERNS = [
 
 class SanitizationError(Exception):
     """Raised when input fails sanitization checks."""
+
     pass
 
 
 class InvalidAIResponseError(Exception):
     """Raised when AI response doesn't match expected schema."""
+
     pass
 
 
@@ -71,7 +76,7 @@ class InputSanitizer:
             )
 
         # Control character check
-        if any(ord(c) < 32 and c not in ('\n', '\t') for c in cleaned):
+        if any(ord(c) < 32 and c not in ("\n", "\t") for c in cleaned):
             raise SanitizationError("Input contains invalid control characters.")
 
         # Prompt injection pattern check
@@ -174,7 +179,9 @@ def validate_ai_response(raw_response: str) -> dict:
             data["alternatives"] = []
         data["alternatives"] = [
             str(a).strip() for a in data["alternatives"] if str(a).strip()
-        ][:5]  # Max 5 alternatives
+        ][
+            :5
+        ]  # Max 5 alternatives
     else:
         data["alternatives"] = []
 

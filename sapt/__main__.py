@@ -7,7 +7,6 @@ Run with: python -m sapt or just 'sapt' after pip install.
 import sys
 import json
 
-from sapt import __version__
 from sapt.cli import parse_args
 from sapt.ui.display import Display
 from sapt.ui.themes import ICONS
@@ -81,6 +80,7 @@ def main():
 
 # ── Command Handlers ─────────────────────────────────────────────
 
+
 def handle_install(args, config, display):
     """Handle 'sapt install <package>'."""
     from sapt.ai.resolver import PackageResolution, PackageResolver
@@ -98,13 +98,16 @@ def handle_install(args, config, display):
 
     packages = args.package  # Can be multiple
     from sapt.config.aliases import AliasManager
+
     aliases = AliasManager()
 
     all_succeeded = True
     for pkg_name in packages:
         alias_target = aliases.resolve(pkg_name)
         if alias_target:
-            display.info(f"Alias [sapt.package]{pkg_name}[/] → [sapt.package]{alias_target}[/]")
+            display.info(
+                f"Alias [sapt.package]{pkg_name}[/] → [sapt.package]{alias_target}[/]"
+            )
             pkg_name = alias_target
         if args.source and args.source != "apt":
             resolution = PackageResolution(
@@ -251,9 +254,10 @@ def handle_search(args, config, display):
     if resolution.confidence > 0:
         display.info(f"AI suggests: [bold cyan]{resolution.package}[/]")
         if resolution.alternatives:
-            display.info("Also consider: " + ", ".join(
-                f"[cyan]{a}[/]" for a in resolution.alternatives
-            ))
+            display.info(
+                "Also consider: "
+                + ", ".join(f"[cyan]{a}[/]" for a in resolution.alternatives)
+            )
         if resolution.notes:
             display.muted(resolution.notes)
         display.console.print()
@@ -265,9 +269,11 @@ def handle_search(args, config, display):
         if results:
             from rich.table import Table
             from rich import box
+
             table = Table(
                 title=f"{ICONS['search']} APT Results for '{query}'",
-                box=box.ROUNDED, border_style="#7C3AED",
+                box=box.ROUNDED,
+                border_style="#7C3AED",
             )
             table.add_column("Package", style="bold cyan")
             table.add_column("Description")
@@ -291,8 +297,8 @@ def handle_explain(args, config, display):
         f"Explain the Linux tool/package '{args.tool}' in plain language. "
         f"Cover: what it does, what permissions it needs, typical resource usage, "
         f"and who typically uses it. Keep it concise (3-5 sentences). "
-        f"Respond in JSON: {{\"name\": \"\", \"description\": \"\", "
-        f"\"permissions\": \"\", \"use_case\": \"\"}}"
+        f'Respond in JSON: {{"name": "", "description": "", '
+        f'"permissions": "", "use_case": ""}}'
     )
 
     with display.spinner(f"Looking up {args.tool}..."):
@@ -316,11 +322,15 @@ def handle_explain(args, config, display):
         f"[bold]Use case:[/] {result.get('use_case', 'N/A')}"
     )
 
-    display.console.print(Panel(
-        content, title=f"{ICONS['brain']} Explain: {args.tool}",
-        border_style=COLORS["primary"], box=box.ROUNDED,
-        padding=(1, 2),
-    ))
+    display.console.print(
+        Panel(
+            content,
+            title=f"{ICONS['brain']} Explain: {args.tool}",
+            border_style=COLORS["primary"],
+            box=box.ROUNDED,
+            padding=(1, 2),
+        )
+    )
 
     return 0
 
@@ -336,8 +346,8 @@ def handle_learn(args, config, display):
         f"Teach me about the Linux tool '{args.tool}'. Provide: "
         f"1) One-line description, 2) How to install it, "
         f"3) 5 most common commands/usage examples, 4) Official docs URL. "
-        f"Respond in JSON: {{\"name\": \"\", \"description\": \"\", "
-        f"\"install\": \"\", \"commands\": [\"\", ...], \"docs_url\": \"\"}}"
+        f'Respond in JSON: {{"name": "", "description": "", '
+        f'"install": "", "commands": ["", ...], "docs_url": ""}}'
     )
 
     with display.spinner(f"Learning about {args.tool}..."):
@@ -366,11 +376,15 @@ def handle_learn(args, config, display):
         f"[bold]Docs:[/] {result.get('docs_url', 'N/A')}"
     )
 
-    display.console.print(Panel(
-        content, title=f"{ICONS['rocket']} Learn: {args.tool}",
-        border_style=COLORS["secondary"], box=box.ROUNDED,
-        padding=(1, 2),
-    ))
+    display.console.print(
+        Panel(
+            content,
+            title=f"{ICONS['rocket']} Learn: {args.tool}",
+            border_style=COLORS["secondary"],
+            box=box.ROUNDED,
+            padding=(1, 2),
+        )
+    )
 
     return 0
 
@@ -387,8 +401,8 @@ def handle_ask(args, config, display):
         f"The user wants to: {goal}\n"
         f"Suggest a complete toolkit of Linux packages/tools for this goal. "
         f"For each tool, explain briefly why it's needed. "
-        f"Respond in JSON: {{\"goal\": \"\", \"tools\": ["
-        f"{{\"name\": \"\", \"package\": \"\", \"why\": \"\", \"source\": \"apt\"}}]}}"
+        f'Respond in JSON: {{"goal": "", "tools": ['
+        f'{{"name": "", "package": "", "why": "", "source": "apt"}}]}}'
     )
 
     with display.spinner(f"Thinking about: {goal}..."):
@@ -425,13 +439,15 @@ def handle_ask(args, config, display):
             tool.get("why", ""),
         )
 
-    display.console.print(Panel(
-        table,
-        title=f"{ICONS['brain']} Toolkit for: {goal}",
-        border_style=COLORS["primary"],
-        box=box.ROUNDED,
-        padding=(1, 1),
-    ))
+    display.console.print(
+        Panel(
+            table,
+            title=f"{ICONS['brain']} Toolkit for: {goal}",
+            border_style=COLORS["primary"],
+            box=box.ROUNDED,
+            padding=(1, 1),
+        )
+    )
 
     display.console.print()
     display.info(
@@ -446,7 +462,6 @@ def handle_ask(args, config, display):
 
 def handle_doctor(args, config, display):
     """Handle 'sapt doctor'."""
-    import shutil
     from sapt.execution.apt import AptBackend
     from sapt.security.audit import AuditLogger
     from sapt.ai.cache import ResponseCache
@@ -459,7 +474,7 @@ def handle_doctor(args, config, display):
 
     # Check APT
     try:
-        apt = AptBackend()
+        AptBackend()
         checks["APT available"] = {"ok": True, "detail": "apt is installed and working"}
     except Exception:
         checks["APT available"] = {"ok": False, "detail": "apt not found"}
@@ -482,9 +497,7 @@ def handle_doctor(args, config, display):
 
     usage = UsageTracker().monthly_summary()
     budget = float(config.get("monthly_budget_usd") or 0.0) if config else 0.0
-    usage_detail = (
-        f"{usage['calls']} calls, ${usage['estimated_spend_usd']:.4f} estimated this month"
-    )
+    usage_detail = f"{usage['calls']} calls, ${usage['estimated_spend_usd']:.4f} estimated this month"
     if budget > 0:
         usage_detail += f" / ${budget:.4f} budget"
     checks["AI usage budget"] = {
@@ -504,17 +517,23 @@ def handle_doctor(args, config, display):
             config_mgr.load()
             checks["Config file"] = {"ok": True, "detail": "Config exists and is valid"}
         except (ValueError, FileNotFoundError):
-            checks["Config file"] = {"ok": False, "detail": "Config exists but is invalid"}
+            checks["Config file"] = {
+                "ok": False,
+                "detail": "Config exists but is invalid",
+            }
             score -= 10
 
     # Check disk usage of cache dir
-    cache_size = sum(
-        f.stat().st_size for f in CACHE_DIR.rglob("*") if f.is_file()
-    ) if CACHE_DIR.exists() else 0
+    cache_size = (
+        sum(f.stat().st_size for f in CACHE_DIR.rglob("*") if f.is_file())
+        if CACHE_DIR.exists()
+        else 0
+    )
     cache_mb = cache_size / (1024 * 1024)
     checks["Cache disk usage"] = {
         "ok": cache_mb < 100,
-        "detail": f"{cache_mb:.1f} MB" + (" (consider clearing)" if cache_mb > 100 else ""),
+        "detail": f"{cache_mb:.1f} MB"
+        + (" (consider clearing)" if cache_mb > 100 else ""),
     }
     if cache_mb > 100:
         score -= 5
@@ -570,7 +589,9 @@ def handle_why(args, config, display):
 
     if not apt.is_installed(package):
         if args.json:
-            _emit_json({"package": package, "installed": False, "reverse_dependencies": []})
+            _emit_json(
+                {"package": package, "installed": False, "reverse_dependencies": []}
+            )
             return 1
         display.warning(f"[sapt.package]{package}[/] is not installed.")
         return 1
@@ -578,10 +599,14 @@ def handle_why(args, config, display):
     version = apt.get_version(package) or "unknown version"
     reverse_deps = apt.get_reverse_dependencies(package)
     if args.json:
-        _emit_json({
-            "package": package, "installed": True, "version": version,
-            "reverse_dependencies": reverse_deps,
-        })
+        _emit_json(
+            {
+                "package": package,
+                "installed": True,
+                "version": version,
+                "reverse_dependencies": reverse_deps,
+            }
+        )
         return 0
     if not reverse_deps:
         display.info(
@@ -592,7 +617,8 @@ def handle_why(args, config, display):
 
     table = Table(
         title=f"{ICONS['link']} Packages depending on {package}",
-        box=box.ROUNDED, border_style="#7C3AED",
+        box=box.ROUNDED,
+        border_style="#7C3AED",
     )
     table.add_column("#", style="dim", width=4)
     table.add_column("Package", style="bold cyan")
@@ -615,7 +641,8 @@ def handle_diff(args, config, display):
         display.banner_mini()
     entries = AuditLogger().get_history(args.count)
     changes = [
-        entry for entry in entries
+        entry
+        for entry in entries
         if entry.get("action") in {"install", "remove", "purge", "upgrade"}
     ]
     if args.json:
@@ -628,7 +655,8 @@ def handle_diff(args, config, display):
     symbols = {"install": "+", "remove": "-", "purge": "-", "upgrade": "↑"}
     table = Table(
         title=f"{ICONS['chart']} Recorded Package Changes",
-        box=box.ROUNDED, border_style="#7C3AED",
+        box=box.ROUNDED,
+        border_style="#7C3AED",
     )
     table.add_column("When", style="dim")
     table.add_column("Change", style="bold")
@@ -665,14 +693,18 @@ def handle_undo(args, config, display):
     reversible = {"install", "remove", "purge"}
     target = next(
         (
-            entry for entry in reversed(audit.get_all())
-            if entry.get("success") and entry.get("action") in reversible
+            entry
+            for entry in reversed(audit.get_all())
+            if entry.get("success")
+            and entry.get("action") in reversible
             and entry.get("package")
         ),
         None,
     )
     if target is None:
-        display.info("No successful install, remove, or purge action is available to undo.")
+        display.info(
+            "No successful install, remove, or purge action is available to undo."
+        )
         return 0
 
     package = target["package"]
@@ -681,7 +713,9 @@ def handle_undo(args, config, display):
     if action == "install":
         display.info(f"Undoing install of [sapt.package]{package}[/] by removing it.")
         result = executor.remove(
-            package, dry_run=args.dry_run, auto_yes=args.yes,
+            package,
+            dry_run=args.dry_run,
+            auto_yes=args.yes,
         )
         inverse = "remove"
     else:
@@ -690,18 +724,27 @@ def handle_undo(args, config, display):
             "the removed version may no longer be available."
         )
         resolution = PackageResolution(
-            package=package, source="apt", confidence=1.0, trust_tier=1,
+            package=package,
+            source="apt",
+            confidence=1.0,
+            trust_tier=1,
             notes="Reinstalled while undoing a previous SmartAPT action.",
         )
         result = executor.install(
-            resolution, dry_run=args.dry_run, auto_yes=args.yes,
+            resolution,
+            dry_run=args.dry_run,
+            auto_yes=args.yes,
         )
         inverse = "install"
 
     if not args.dry_run:
         audit.log(
-            action="undo", package=package, source="apt", source_tier=1,
-            success=result.success, command=result.command,
+            action="undo",
+            package=package,
+            source="apt",
+            source_tier=1,
+            success=result.success,
+            command=result.command,
             details=f"Reversed {action} entry {target.get('id', 'unknown')} via {inverse}.",
         )
     return 0 if result.success else 1
@@ -755,12 +798,15 @@ def handle_agent(args, config, display):
             tools.append({"package": package, "why": str(tool.get("why", ""))})
 
     if not tools:
-        display.warning("No safe APT package recommendations were returned for this goal.")
+        display.warning(
+            "No safe APT package recommendations were returned for this goal."
+        )
         return 1
 
     table = Table(
         title=f"{ICONS['brain']} APT Toolkit for: {goal}",
-        box=box.ROUNDED, border_style="#7C3AED",
+        box=box.ROUNDED,
+        border_style="#7C3AED",
     )
     table.add_column("#", style="dim", width=4)
     table.add_column("Package", style="bold cyan")
@@ -774,17 +820,27 @@ def handle_agent(args, config, display):
     successes = 0
     for tool in tools:
         resolution = PackageResolution(
-            package=tool["package"], source="apt", confidence=1.0,
-            trust_tier=1, notes=tool["why"],
+            package=tool["package"],
+            source="apt",
+            confidence=1.0,
+            trust_tier=1,
+            notes=tool["why"],
         )
         result = executor.install(
-            resolution, dry_run=args.dry_run, auto_yes=args.yes,
+            resolution,
+            dry_run=args.dry_run,
+            auto_yes=args.yes,
         )
         if not args.dry_run:
             audit.log(
-                action="install", package=resolution.package,
-                version=resolution.version, source="apt", source_tier=1,
-                ai_confidence=1.0, success=result.success, command=result.command,
+                action="install",
+                package=resolution.package,
+                version=resolution.version,
+                source="apt",
+                source_tier=1,
+                ai_confidence=1.0,
+                success=result.success,
+                command=result.command,
                 details=f"Agent goal: {goal}",
             )
         successes += int(result.success)
@@ -851,11 +907,14 @@ def handle_audit(args, config, display):
     if cve_packages_arg is not None:
         from sapt.security.vulnerabilities import VulnerabilityScanner
 
-        packages = cve_packages_arg or [
-            entry.get("package", "")
-            for entry in reversed(entries)
-            if entry.get("success") and entry.get("package")
-        ][:10]
+        packages = (
+            cve_packages_arg
+            or [
+                entry.get("package", "")
+                for entry in reversed(entries)
+                if entry.get("success") and entry.get("package")
+            ][:10]
+        )
         scanner = VulnerabilityScanner()
         cve_reports = [scanner.scan(package).to_dict() for package in packages]
         report["vulnerabilities"] = cve_reports
@@ -882,11 +941,13 @@ def handle_audit(args, config, display):
     table.add_row("Failed actions", str(failures))
     table.add_row(
         "Actions",
-        ", ".join(f"{name}: {count}" for name, count in sorted(actions.items())) or "none",
+        ", ".join(f"{name}: {count}" for name, count in sorted(actions.items()))
+        or "none",
     )
     table.add_row(
         "Sources",
-        ", ".join(f"{name}: {count}" for name, count in sorted(sources.items())) or "none",
+        ", ".join(f"{name}: {count}" for name, count in sorted(sources.items()))
+        or "none",
     )
     display.console.print(table)
 
@@ -927,9 +988,25 @@ def handle_audit(args, config, display):
 def handle_completion(args, config, display):
     """Print a static shell completion script for the installed CLI."""
     commands = [
-        "install", "remove", "update", "upgrade", "search", "explain",
-        "learn", "ask", "doctor", "history", "audit", "completion", "why",
-        "diff", "undo", "agent", "cache", "alias", "config",
+        "install",
+        "remove",
+        "update",
+        "upgrade",
+        "search",
+        "explain",
+        "learn",
+        "ask",
+        "doctor",
+        "history",
+        "audit",
+        "completion",
+        "why",
+        "diff",
+        "undo",
+        "agent",
+        "cache",
+        "alias",
+        "config",
     ]
     options = {
         "install": "--dry-run --source --version --yes -y",
@@ -1031,7 +1108,9 @@ def handle_alias(args, config, display):
                 _emit_json({"aliases": aliases})
             elif aliases:
                 for name, package in aliases.items():
-                    display.info(f"[sapt.package]{name}[/] → [sapt.package]{package}[/]")
+                    display.info(
+                        f"[sapt.package]{name}[/] → [sapt.package]{package}[/]"
+                    )
             else:
                 display.info("No aliases configured.")
             return 0
@@ -1041,7 +1120,9 @@ def handle_alias(args, config, display):
             if args.json:
                 _emit_json({"alias": args.name, "package": target})
             elif target:
-                display.info(f"[sapt.package]{args.name}[/] → [sapt.package]{target}[/]")
+                display.info(
+                    f"[sapt.package]{args.name}[/] → [sapt.package]{target}[/]"
+                )
                 return 0
             else:
                 display.warning(f"Alias not found: {args.name}")
@@ -1067,8 +1148,12 @@ def handle_config(args, display):
         config = config_mgr.show()
         from rich.table import Table
         from rich import box
-        table = Table(box=box.ROUNDED, border_style="#7C3AED",
-                      title=f"{ICONS['gear']} Current Configuration")
+
+        table = Table(
+            box=box.ROUNDED,
+            border_style="#7C3AED",
+            title=f"{ICONS['gear']} Current Configuration",
+        )
         table.add_column("Setting", style="bold")
         table.add_column("Value")
         for key, value in config.items():
@@ -1125,6 +1210,7 @@ def handle_config(args, display):
 
     if args.set_key:
         import questionary
+
         new_key = questionary.password("Enter new API key:").ask()
         if new_key:
             config_mgr.set("api_key", new_key.strip())
@@ -1143,23 +1229,27 @@ def handle_config(args, display):
             return 1
 
         import questionary
+
         config = config_mgr.load()
         if args.set_model:
             provider = config.get("provider", "custom")
             models = PROVIDER_CONFIGS.get(provider, {}).get("models", [])
             if models:
                 value = questionary.select(
-                    "Select model:", choices=models,
+                    "Select model:",
+                    choices=models,
                     default=config.get("model"),
                 ).ask()
             else:
                 value = questionary.text(
-                    "Enter model name:", default=config.get("model", ""),
+                    "Enter model name:",
+                    default=config.get("model", ""),
                 ).ask()
             key, label = "model", "Model"
         else:
             value = questionary.text(
-                "Enter API endpoint URL:", default=config.get("endpoint", ""),
+                "Enter API endpoint URL:",
+                default=config.get("endpoint", ""),
             ).ask()
             key, label = "endpoint", "Endpoint"
 

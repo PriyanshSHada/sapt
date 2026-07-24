@@ -5,14 +5,11 @@ Config is stored at ~/.config/sapt/config.json.
 """
 
 import json
-import shutil
 from datetime import datetime, timezone
-from pathlib import Path
 
-from sapt.utils.constants import CONFIG_FILE, CONFIG_DIR, PROVIDER_CONFIGS
+from sapt.utils.constants import CONFIG_FILE
 from sapt.utils.system import ensure_directories
 from sapt.config.keystore import KeyStore
-
 
 # ── Required Config Fields ───────────────────────────────────────
 REQUIRED_FIELDS = ("provider", "model", "api_key", "endpoint", "format")
@@ -144,7 +141,7 @@ class ConfigManager:
         try:
             provider = get_provider(config)
             response = provider.call(
-                system_prompt="Respond with exactly: {\"status\": \"ok\"}",
+                system_prompt='Respond with exactly: {"status": "ok"}',
                 user_message="ping",
             )
             if response is not None:

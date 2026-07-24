@@ -39,7 +39,9 @@ class AliasManager:
     def set(self, name: str, package: str) -> None:
         alias = name.strip().lower()
         if not re.fullmatch(r"[a-z0-9][a-z0-9_-]{0,31}", alias):
-            raise AliasError("Alias names must be 1-32 lowercase letters, digits, hyphens, or underscores.")
+            raise AliasError(
+                "Alias names must be 1-32 lowercase letters, digits, hyphens, or underscores."
+            )
         try:
             target = InputSanitizer().check_package_name(package)
         except SanitizationError as error:

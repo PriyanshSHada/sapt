@@ -16,6 +16,7 @@ from sapt.utils.constants import DEFAULT_MAX_TOKENS
 
 class ProviderError(Exception):
     """Raised when an AI provider call fails."""
+
     pass
 
 
@@ -94,20 +95,22 @@ class AnthropicProvider(BaseProvider):
             ],
         }
         if self.structured_output:
-            payload["tools"] = [{
-                "name": "return_json",
-                "description": "Return the requested JSON output.",
-                "input_schema": {
-                    "type": "object",
-                    "properties": {
-                        "json_output": {
-                            "type": "string",
-                            "description": "A JSON string containing the response."
-                        }
+            payload["tools"] = [
+                {
+                    "name": "return_json",
+                    "description": "Return the requested JSON output.",
+                    "input_schema": {
+                        "type": "object",
+                        "properties": {
+                            "json_output": {
+                                "type": "string",
+                                "description": "A JSON string containing the response.",
+                            }
+                        },
+                        "required": ["json_output"],
                     },
-                    "required": ["json_output"]
                 }
-            }]
+            ]
             payload["tool_choice"] = {"type": "tool", "name": "return_json"}
 
         try:
@@ -118,19 +121,27 @@ class AnthropicProvider(BaseProvider):
                 timeout=self.timeout,
             )
         except requests.ConnectionError:
-            raise ProviderError("Cannot connect to Anthropic API. Check your internet connection.")
+            raise ProviderError(
+                "Cannot connect to Anthropic API. Check your internet connection."
+            )
         except requests.Timeout:
             raise ProviderError("Anthropic API request timed out.")
 
         if response.status_code == 401:
-            raise ProviderError("Invalid Anthropic API key. Run 'sapt config --set-key' to update.")
+            raise ProviderError(
+                "Invalid Anthropic API key. Run 'sapt config --set-key' to update."
+            )
         if response.status_code == 429:
-            raise ProviderError("Anthropic API rate limit exceeded. Please wait and try again.")
+            raise ProviderError(
+                "Anthropic API rate limit exceeded. Please wait and try again."
+            )
         if response.status_code != 200:
-            raise ProviderError(f"Anthropic API error ({response.status_code}): {response.text[:200]}")
+            raise ProviderError(
+                f"Anthropic API error ({response.status_code}): {response.text[:200]}"
+            )
 
         data = response.json()
-        
+
         # Handle tool call response
         text = ""
         for block in data.get("content", []):
@@ -141,7 +152,7 @@ class AnthropicProvider(BaseProvider):
                     break
             elif block.get("type") == "text":
                 text = block.get("text", "")
-                
+
         if not text:
             raise ProviderError("Empty response from Anthropic API.")
 
@@ -176,18 +187,18 @@ class OpenAIProvider(BaseProvider):
             response = self._post_json(payload, headers)
 
         if response.status_code == 401:
-            raise ProviderError("Invalid API key. Run 'sapt config --set-key' to update.")
+            raise ProviderError(
+                "Invalid API key. Run 'sapt config --set-key' to update."
+            )
         if response.status_code == 429:
             raise ProviderError("API rate limit exceeded. Please wait and try again.")
         if response.status_code != 200:
-            raise ProviderError(f"API error ({response.status_code}): {response.text[:200]}")
+            raise ProviderError(
+                f"API error ({response.status_code}): {response.text[:200]}"
+            )
 
         data = response.json()
-        text = (
-            data.get("choices", [{}])[0]
-            .get("message", {})
-            .get("content", "")
-        )
+        text = data.get("choices", [{}])[0].get("message", {}).get("content", "")
         if not text:
             raise ProviderError("Empty response from API.")
 
@@ -202,7 +213,9 @@ class OpenAIProvider(BaseProvider):
                 timeout=self.timeout,
             )
         except requests.ConnectionError:
-            raise ProviderError("Cannot connect to OpenAI API. Check your internet connection.")
+            raise ProviderError(
+                "Cannot connect to OpenAI API. Check your internet connection."
+            )
         except requests.Timeout:
             raise ProviderError("OpenAI API request timed out.")
 
@@ -238,22 +251,32 @@ class GeminiProvider(BaseProvider):
                 timeout=self.timeout,
             )
         except requests.ConnectionError:
-            raise ProviderError("Cannot connect to Gemini API. Check your internet connection.")
+            raise ProviderError(
+                "Cannot connect to Gemini API. Check your internet connection."
+            )
         except requests.Timeout:
             raise ProviderError("Gemini API request timed out.")
 
         if response.status_code == 400:
-            raise ProviderError(f"Invalid Gemini API key or request: {response.text[:200]}")
+            raise ProviderError(
+                f"Invalid Gemini API key or request: {response.text[:200]}"
+            )
         if response.status_code == 429:
-            raise ProviderError("Gemini API rate limit exceeded. Please wait and try again.")
+            raise ProviderError(
+                "Gemini API rate limit exceeded. Please wait and try again."
+            )
         if response.status_code != 200:
-            raise ProviderError(f"Gemini API error ({response.status_code}): {response.text[:200]}")
+            raise ProviderError(
+                f"Gemini API error ({response.status_code}): {response.text[:200]}"
+            )
 
         data = response.json()
         try:
             text = data["candidates"][0]["content"]["parts"][0]["text"]
         except (KeyError, IndexError):
-            raise ProviderError(f"Unexpected Gemini response format: {json.dumps(data)[:200]}")
+            raise ProviderError(
+                f"Unexpected Gemini response format: {json.dumps(data)[:200]}"
+            )
 
         return self._parse_json_from_text(text)
 

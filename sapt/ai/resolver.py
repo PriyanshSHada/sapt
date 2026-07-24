@@ -9,8 +9,10 @@ from dataclasses import dataclass, field
 from sapt.ai.providers import BaseProvider, ProviderError, get_provider
 from sapt.ai.cache import ResponseCache
 from sapt.ai.sanitizer import (
-    InputSanitizer, SanitizationError,
-    validate_ai_response, InvalidAIResponseError,
+    InputSanitizer,
+    SanitizationError,
+    validate_ai_response,
+    InvalidAIResponseError,
 )
 from sapt.ai.usage import UsageTracker
 from sapt.utils.constants import RESOLVER_SYSTEM_PROMPT
@@ -20,6 +22,7 @@ from sapt.utils.fuzzy import FuzzyMatcher
 @dataclass
 class PackageResolution:
     """Structured result from package resolution."""
+
     package: str
     source: str = "apt"
     confidence: float = 0.0
@@ -62,7 +65,9 @@ class PackageResolver:
         try:
             cleaned = self.sanitizer.check(user_input)
         except SanitizationError as e:
-            return PackageResolution(package=user_input, confidence=0.0, notes=f"Rejected: {e}")
+            return PackageResolution(
+                package=user_input, confidence=0.0, notes=f"Rejected: {e}"
+            )
 
         # Cache check
         cached = self.cache.get(command, cleaned)
@@ -79,7 +84,9 @@ class PackageResolver:
 
         # AI call
         if self._ai_available:
-            estimated_cost = float(self.config.get("estimated_cost_per_call_usd") or 0.0)
+            estimated_cost = float(
+                self.config.get("estimated_cost_per_call_usd") or 0.0
+            )
             budget = float(self.config.get("monthly_budget_usd") or 0.0)
             decision = self.usage.check_budget(budget, estimated_cost)
             if not decision.allowed:
@@ -124,6 +131,7 @@ class PackageResolver:
     def _call_ai(self, user_input: str, command: str) -> dict | None:
         prompt = f"Action: {command}\nPackage/Query: {user_input}"
         import json as _json
+
         raw = self.provider.call(RESOLVER_SYSTEM_PROMPT, prompt)
         try:
             text = raw if isinstance(raw, str) else _json.dumps(raw)
@@ -138,16 +146,20 @@ class PackageResolver:
         matches = self.fuzzy.match(user_input)
         if not matches:
             return PackageResolution(
-                package=user_input, confidence=0.0,
-                notes="Not found in local index.", from_fuzzy=True,
+                package=user_input,
+                confidence=0.0,
+                notes="Not found in local index.",
+                from_fuzzy=True,
             )
         best_name, best_score = matches[0]
         return PackageResolution(
-            package=best_name, source="apt",
+            package=best_name,
+            source="apt",
             confidence=best_score / 100.0,
             alternatives=[n for n, _ in matches[1:]],
             notes="Resolved via local fuzzy match (AI unavailable).",
-            from_fuzzy=True, trust_tier=1,
+            from_fuzzy=True,
+            trust_tier=1,
         )
 
     @staticmethod

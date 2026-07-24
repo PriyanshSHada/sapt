@@ -10,6 +10,7 @@ import shutil
 
 class AptError(Exception):
     """Raised when an APT operation fails."""
+
     pass
 
 
@@ -31,9 +32,7 @@ class AptBackend:
 
     def is_available(self, package: str) -> bool:
         """Check if a package exists in the apt repositories."""
-        result = self._run(
-            ["apt-cache", "show", package], sudo=False, check=False
-        )
+        result = self._run(["apt-cache", "show", package], sudo=False, check=False)
         return result.returncode == 0
 
     def get_version(self, package: str) -> str | None:
@@ -48,9 +47,7 @@ class AptBackend:
 
     def get_available_version(self, package: str) -> str | None:
         """Get the latest available version from repos."""
-        result = self._run(
-            ["apt-cache", "policy", package], sudo=False, check=False
-        )
+        result = self._run(["apt-cache", "policy", package], sudo=False, check=False)
         if result.returncode != 0:
             return None
         for line in result.stdout.splitlines():
@@ -60,9 +57,7 @@ class AptBackend:
 
     def get_size(self, package: str) -> str | None:
         """Get the download/installed size of a package."""
-        result = self._run(
-            ["apt-cache", "show", package], sudo=False, check=False
-        )
+        result = self._run(["apt-cache", "show", package], sudo=False, check=False)
         if result.returncode != 0:
             return None
         for line in result.stdout.splitlines():
@@ -75,9 +70,7 @@ class AptBackend:
 
     def get_dependencies(self, package: str) -> list[str]:
         """Get the dependencies of a package."""
-        result = self._run(
-            ["apt-cache", "depends", package], sudo=False, check=False
-        )
+        result = self._run(["apt-cache", "depends", package], sudo=False, check=False)
         if result.returncode != 0:
             return []
         deps = []
@@ -91,9 +84,7 @@ class AptBackend:
 
     def get_reverse_dependencies(self, package: str) -> list[str]:
         """Get packages that depend on this package."""
-        result = self._run(
-            ["apt-cache", "rdepends", package], sudo=False, check=False
-        )
+        result = self._run(["apt-cache", "rdepends", package], sudo=False, check=False)
         if result.returncode != 0:
             return []
         lines = result.stdout.splitlines()
@@ -107,9 +98,7 @@ class AptBackend:
 
     def search(self, query: str) -> list[dict]:
         """Search for packages matching a query."""
-        result = self._run(
-            ["apt-cache", "search", query], sudo=False, check=False
-        )
+        result = self._run(["apt-cache", "search", query], sudo=False, check=False)
         if result.returncode != 0:
             return []
         packages = []
@@ -121,9 +110,7 @@ class AptBackend:
 
     def show(self, package: str) -> dict:
         """Get detailed info about a package."""
-        result = self._run(
-            ["apt-cache", "show", package], sudo=False, check=False
-        )
+        result = self._run(["apt-cache", "show", package], sudo=False, check=False)
         if result.returncode != 0:
             return {}
         info = {}

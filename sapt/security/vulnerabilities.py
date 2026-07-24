@@ -108,7 +108,9 @@ class VulnerabilityScanner:
             severity = "unknown"
             severities = raw.get("severity") or []
             if severities:
-                severity = severities[0].get("score") or severities[0].get("type") or "unknown"
+                severity = (
+                    severities[0].get("score") or severities[0].get("type") or "unknown"
+                )
             vulns.append(
                 Vulnerability(
                     id=raw.get("id", "unknown"),
