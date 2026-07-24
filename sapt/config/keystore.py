@@ -43,12 +43,12 @@ class KeyStore:
                     return pw
             except Exception:
                 pass
-            
+
             # Fallback to environment variable if keyring fails
             env_key = os.environ.get("SAPT_API_KEY")
             if env_key:
                 return env_key
-                
+
             raise ValueError(
                 "API key was stored in OS keyring but could not be retrieved. "
                 "You can provide it via SAPT_API_KEY env var, or run 'sapt config --reset'."

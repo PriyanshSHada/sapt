@@ -94,3 +94,12 @@ class CommandValidator:
                 "Flatpak IDs should use reverse-DNS style names such as org.example.App."
             )
         return True
+
+    def validate_github_repo(self, repo: str) -> bool:
+        """Validate a GitHub repository name like owner/repo."""
+        if not re.match(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$", repo):
+            raise SecurityViolation(
+                f"Invalid GitHub repository: {repo}\n"
+                "Must be in the format 'owner/repo'."
+            )
+        return True

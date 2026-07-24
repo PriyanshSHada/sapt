@@ -85,7 +85,7 @@ class ExecutorSourceTests(unittest.TestCase):
         display = MagicMock()
         executor = Executor(display=display)
         result = executor.install(
-            PackageResolution(package="tool", source="github", confidence=1),
+            PackageResolution(package="tool", source="unknown", confidence=1),
             auto_yes=True,
         )
 

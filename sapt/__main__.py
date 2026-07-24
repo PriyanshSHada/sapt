@@ -150,25 +150,40 @@ def handle_install(args, config, display):
             resolution.requested_version = args.version
 
         # Execute install
-        result = executor.install(
-            resolution,
-            dry_run=args.dry_run,
-            auto_yes=args.yes,
-        )
-
-        # Log to audit trail
-        if not args.dry_run:
-            audit.log(
-                action="install",
-                package=resolution.package,
-                version=resolution.version,
-                source=resolution.source,
-                source_tier=resolution.trust_tier,
-                ai_confidence=resolution.confidence,
-                success=result.success,
-                command=result.command,
+        try:
+            result = executor.install(
+                resolution,
+                dry_run=args.dry_run,
+                auto_yes=args.yes,
             )
-        all_succeeded = all_succeeded and result.success
+            # Log successful or gracefully failed execution to audit trail
+            if not args.dry_run:
+                audit.log(
+                    action="install",
+                    package=resolution.package,
+                    version=resolution.version,
+                    source=resolution.source,
+                    source_tier=resolution.trust_tier,
+                    ai_confidence=resolution.confidence,
+                    success=result.success,
+                    command=result.command,
+                )
+            all_succeeded = all_succeeded and result.success
+        except Exception as e:
+            # Log unexpected crashes to audit trail
+            if not args.dry_run:
+                audit.log(
+                    action="install",
+                    package=resolution.package,
+                    version=resolution.version,
+                    source=resolution.source,
+                    source_tier=resolution.trust_tier,
+                    ai_confidence=resolution.confidence,
+                    success=False,
+                    command="",
+                    details=f"CRASH: {str(e)}",
+                )
+            raise
 
     return 0 if all_succeeded else 1
 
@@ -181,18 +196,28 @@ def handle_remove(args, config, display):
     executor = Executor(display=display)
     audit = AuditLogger()
 
-    result = executor.remove(
-        package=args.package,
-        purge=args.clean,
-        auto_yes=args.yes,
-    )
-
-    audit.log(
-        action="remove" if not args.clean else "purge",
-        package=args.package,
-        success=result.success,
-        command=result.command,
-    )
+    try:
+        result = executor.remove(
+            package=args.package,
+            purge=args.clean,
+            auto_yes=args.yes,
+        )
+        audit.log(
+            action="remove" if not args.clean else "purge",
+            package=args.package,
+            success=result.success,
+            command=result.command,
+        )
+        return 0 if result.success else 1
+    except Exception as e:
+        audit.log(
+            action="remove" if not args.clean else "purge",
+            package=args.package,
+            success=False,
+            command="",
+            details=f"CRASH: {str(e)}",
+        )
+        raise
 
     return 0 if result.success else 1
 
@@ -205,13 +230,22 @@ def handle_update(args, config, display):
     executor = Executor(display=display)
     audit = AuditLogger()
 
-    result = executor.update()
-
-    audit.log(
-        action="update",
-        success=result.success,
-        command=result.command,
-    )
+    try:
+        result = executor.update()
+        audit.log(
+            action="update",
+            success=result.success,
+            command=result.command,
+        )
+        return 0 if result.success else 1
+    except Exception as e:
+        audit.log(
+            action="update",
+            success=False,
+            command="",
+            details=f"CRASH: {str(e)}",
+        )
+        raise
 
     return 0 if result.success else 1
 
@@ -224,13 +258,22 @@ def handle_upgrade(args, config, display):
     executor = Executor(display=display)
     audit = AuditLogger()
 
-    result = executor.upgrade(auto_yes=args.yes)
-
-    audit.log(
-        action="upgrade",
-        success=result.success,
-        command=result.command,
-    )
+    try:
+        result = executor.upgrade(auto_yes=args.yes)
+        audit.log(
+            action="upgrade",
+            success=result.success,
+            command=result.command,
+        )
+        return 0 if result.success else 1
+    except Exception as e:
+        audit.log(
+            action="upgrade",
+            success=False,
+            command="",
+            details=f"CRASH: {str(e)}",
+        )
+        raise
 
     return 0 if result.success else 1
 

@@ -75,6 +75,7 @@ ALLOWED_COMMAND_PREFIXES = (
     "dpkg --configure",
     "snap install",
     "flatpak install",
+    "github_install",
 )
 
 # ── Forbidden Characters in Commands ─────────────────────────────

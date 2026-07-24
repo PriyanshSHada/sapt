@@ -60,17 +60,17 @@ class AuditLogger:
 
         # Use a lock file to ensure atomic read-modify-write for the hash chain
         lock_path = self.log_path.with_suffix(".log.lock")
-        
+
         with open(lock_path, "w") as lock_file:
             fcntl.flock(lock_file, fcntl.LOCK_EX)
             try:
                 # 1. Safely read previous hash while locked
                 prev_hash = self._get_last_hash()
                 entry["prev_hash"] = prev_hash
-                
+
                 # 2. Compute this entry's hash
                 entry["hash"] = self._compute_hash(entry)
-                
+
                 # 3. Append to log
                 with open(self.log_path, "a") as f:
                     f.write(json.dumps(entry) + "\n")

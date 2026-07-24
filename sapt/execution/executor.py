@@ -8,7 +8,12 @@ import time
 from dataclasses import dataclass
 
 from sapt.execution.apt import AptBackend, AptError
-from sapt.execution.stores import FlatpakBackend, SnapBackend, StoreBackendError
+from sapt.execution.stores import (
+    FlatpakBackend,
+    SnapBackend,
+    GithubBackend,
+    StoreBackendError,
+)
 from sapt.execution.validator import CommandValidator, SecurityViolation
 from sapt.ai.resolver import PackageResolution
 from sapt.security.verification import PackageVerifier
@@ -61,13 +66,13 @@ class Executor:
         command = f"apt install -y {install_target}"
 
         if resolution.source != "apt":
-            if resolution.source in {"snap", "flatpak"}:
+            if resolution.source in {"snap", "flatpak", "github"}:
                 return self._install_store(
                     resolution, dry_run=dry_run, auto_yes=auto_yes
                 )
             message = (
                 f"Source '{resolution.source}' is not supported by this build. "
-                "Only apt, snap, and flatpak packages can be installed currently."
+                "Only apt, snap, flatpak, and github packages can be installed currently."
             )
             self.display.error(message)
             return ExecutionResult(
@@ -243,15 +248,23 @@ class Executor:
         dry_run: bool = False,
         auto_yes: bool = False,
     ) -> ExecutionResult:
-        """Install a Snap or Flatpak package through its native backend."""
+        """Install a Snap, Flatpak, or GitHub package through its native backend."""
         package = resolution.package
         source = resolution.source
-        backend = SnapBackend() if source == "snap" else FlatpakBackend()
-        command = (
-            f"snap install {package}"
-            if source == "snap"
-            else f"flatpak install -y flathub {package}"
-        )
+
+        if source == "snap":
+            backend = SnapBackend()
+        elif source == "github":
+            backend = GithubBackend()
+        else:
+            backend = FlatpakBackend()
+
+        if source == "snap":
+            command = f"snap install {package}"
+        elif source == "github":
+            command = f"github_install {package}"
+        else:
+            command = f"flatpak install -y flathub {package}"
 
         verification = self.verifier.verify(package, source)
         resolution.trust_tier = verification.tier
@@ -262,6 +275,8 @@ class Executor:
             self.validator.validate(command)
             if source == "snap":
                 self.validator.validate_snap_name(package)
+            elif source == "github":
+                self.validator.validate_github_repo(package)
             else:
                 self.validator.validate_flatpak_id(package)
         except SecurityViolation as e:
@@ -291,10 +306,15 @@ class Executor:
 
         scanner = VulnerabilityScanner()
         with self.display.spinner(f"Checking OSV CVE database for {package}..."):
+            ecosystem = "Debian"
+            if source == "snap":
+                ecosystem = "Snap"
+            elif source == "github":
+                ecosystem = "GitHub"
             cve_report = scanner.scan(
                 package,
                 version=resolution.version,
-                ecosystem="Debian" if source != "snap" else "Snap",
+                ecosystem=ecosystem,
             )
         if not cve_report.ok:
             self.display.warning(f"CVE lookup failed: {cve_report.error}")
