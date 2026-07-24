@@ -112,3 +112,14 @@
 - Shows rich warnings with CVE IDs and severities if a vulnerability is detected.
 
 **Current Status:** Phase 3 is complete for budget controls, native structured outputs, and CVE checking. GitHub release verification remains as a final hardening step.
+
+---
+## Phase 4 Final Polish & Integration (July 24, 2026)
+
+### Visual and UX Polish
+- Corrected the ASCII banner visual alignment in `ui/themes.py` to ensure perfectly rectangular rendering (exactly 55 characters per line).
+- Implemented a Quality-of-Life (QoL) URL normalizer for Custom OpenAI-Compatible APIs in `ai/providers.py` that auto-appends `/chat/completions`. This mimics the behavior of the official OpenAI SDK and significantly reduces user friction during setup.
+
+### Deployment & Validation
+- Verified integration and functionality of Custom Providers utilizing OpenRouter and Fireworks AI endpoints.
+- Re-installed the standard `sapt` global executable via `pipx install --force .` to ensure the system utilizes the latest updated codebase.

@@ -46,7 +46,7 @@ PKG_INDEX = CACHE_DIR / "package_index.txt"
 # ── AI Defaults ──────────────────────────────────────────────────
 CACHE_TTL = 86400  # 24 hours in seconds
 MAX_INPUT_LEN = 200
-DEFAULT_MAX_TOKENS = 300
+DEFAULT_MAX_TOKENS = 8192
 
 # ── Validation Sets ──────────────────────────────────────────────
 VALID_ACTIONS = frozenset({"install", "remove", "search", "info", "update", "upgrade"})

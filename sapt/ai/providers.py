@@ -48,16 +48,22 @@ class BaseProvider(ABC):
 
     def _parse_json_from_text(self, text: str) -> dict:
         """Extract and parse JSON from text that might contain extras."""
+        import re
         text = text.strip()
 
-        # Strip markdown code fences
-        if text.startswith("```"):
-            lines = text.split("\n")
-            if lines[0].startswith("```"):
-                lines = lines[1:]
-            if lines and lines[-1].strip() == "```":
-                lines = lines[:-1]
-            text = "\n".join(lines).strip()
+        # Try to find a markdown json block first
+        match = re.search(r"```(?:json)?\s*(.*?)\s*```", text, re.DOTALL)
+        if match:
+            text = match.group(1).strip()
+        else:
+            # Strip markdown code fences just in case
+            if text.startswith("```"):
+                lines = text.split("\n")
+                if lines[0].startswith("```"):
+                    lines = lines[1:]
+                if lines and lines[-1].strip() == "```":
+                    lines = lines[:-1]
+                text = "\n".join(lines).strip()
 
         # Try direct parse
         try:
@@ -65,12 +71,22 @@ class BaseProvider(ABC):
         except json.JSONDecodeError:
             pass
 
-        # Try to find JSON object in the text
-        start = text.find("{")
-        end = text.rfind("}") + 1
-        if start != -1 and end > start:
+        # Try to find JSON object or array in the text
+        start_obj = text.find("{")
+        end_obj = text.rfind("}") + 1
+        
+        start_arr = text.find("[")
+        end_arr = text.rfind("]") + 1
+        
+        if start_obj != -1 and end_obj > start_obj:
             try:
-                return json.loads(text[start:end])
+                return json.loads(text[start_obj:end_obj])
+            except json.JSONDecodeError:
+                pass
+                
+        if start_arr != -1 and end_arr > start_arr:
+            try:
+                return json.loads(text[start_arr:end_arr])
             except json.JSONDecodeError:
                 pass
 
@@ -88,7 +104,7 @@ class AnthropicProvider(BaseProvider):
         }
         payload = {
             "model": self.model,
-            "max_tokens": DEFAULT_MAX_TOKENS,
+            "max_tokens": min(DEFAULT_MAX_TOKENS, 2048),
             "system": system_prompt,
             "messages": [
                 {"role": "user", "content": user_message},
@@ -162,6 +178,12 @@ class AnthropicProvider(BaseProvider):
 class OpenAIProvider(BaseProvider):
     """OpenAI API provider (also works with OpenAI-compatible endpoints)."""
 
+    def __init__(self, config: dict):
+        super().__init__(config)
+        # Auto-append /chat/completions if missing (mimics OpenAI SDK behavior)
+        if not self.endpoint.endswith("/chat/completions"):
+            self.endpoint = self.endpoint.rstrip("/") + "/chat/completions"
+
     def call(self, system_prompt: str, user_message: str) -> dict:
         headers = {
             "content-type": "application/json",
@@ -171,7 +193,7 @@ class OpenAIProvider(BaseProvider):
 
         payload = {
             "model": self.model,
-            "max_tokens": DEFAULT_MAX_TOKENS,
+            "max_tokens": min(DEFAULT_MAX_TOKENS, 2048),
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_message},
@@ -272,7 +294,8 @@ class GeminiProvider(BaseProvider):
 
         data = response.json()
         try:
-            text = data["candidates"][0]["content"]["parts"][0]["text"]
+            parts = data["candidates"][0]["content"]["parts"]
+            text = "".join(p.get("text", "") for p in parts)
         except (KeyError, IndexError):
             raise ProviderError(
                 f"Unexpected Gemini response format: {json.dumps(data)[:200]}"

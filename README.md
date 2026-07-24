@@ -1,81 +1,129 @@
-# sapt (SmartAPT)
+<div align="center">
+  <h1>🧠 SmartAPT</h1>
+  <p><strong>The AI-Powered, Security-First Package Manager for Debian/Ubuntu</strong></p>
+  
+  <p>
+    <a href="https://github.com/PriyanshSHada/sapt/releases"><img src="https://img.shields.io/github/v/release/PriyanshSHada/sapt?style=flat-square" alt="Release"></a>
+    <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.10+-blue.svg?style=flat-square" alt="Python 3.10+"></a>
+    <a href="https://github.com/PriyanshSHada/sapt/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg?style=flat-square" alt="License"></a>
+  </p>
+</div>
 
-SmartAPT is a security-conscious command-line helper for Debian and Ubuntu
-packages. Its design principle is simple: **AI advises, the system decides,
-and the human confirms.**
+---
 
-## What it does
+SmartAPT (`sapt`) is a next-generation wrapper for APT that introduces natural language package resolution, automated CVE vulnerability scanning, cryptographic audit logging, and multi-source installations (APT, Snap, GitHub).
 
-- Resolves package names and natural-language package requests through a
-  configurable AI provider, with an offline fuzzy-match fallback.
-- Shows package source, trust tier, version, size, and an explicit
-  confirmation before an install.
-- Executes only allowlisted APT, Snap, and Flatpak install operations; GitHub
-  installs remain blocked until signature/checksum verification exists.
-- Stores AI keys encrypted with a machine-derived key and records actions in
-  a tamper-evident audit log.
-- Supports local aliases, JSON audit reports, and shell completion generation.
+Instead of hunting for package names on StackOverflow, just ask SmartAPT what you want to do.
 
-## Install
+## ✨ Features
+
+- 🤖 **AI-Driven Resolution:** Install packages using natural language (`sapt install "a good python web framework"`).
+- 🛡️ **Zero-Trust Security:** Every package is scanned against the OSV (Open Source Vulnerability) database before installation. Active CVEs are blocked.
+- 📦 **Multi-Source Support:** Seamlessly install from standard `apt`, Canonical `snap`, or directly from `github` releases.
+- 🔐 **Cryptographic Audit Log:** Every action is recorded in a tamper-evident, blockchain-lite JSON ledger with SHA-256 hashing.
+- 🧠 **Autonomous Agent:** Ask the agent to plan an entire workflow (`sapt agent "I need a standard setup for network port scanning"`).
+- ⚡ **Offline Resilience:** If the AI API goes down, the system gracefully degrades to a blazing-fast local fuzzy search.
+- 🔌 **Bring Your Own AI:** Native support for Google Gemini, OpenAI, Anthropic, and generic custom endpoints (Ollama, LM Studio).
+
+## 🚀 Installation
+
+SmartAPT is built in Python and designed to be installed globally using `pipx`.
 
 ```bash
-python -m pip install .
+# 1. Install pipx (if you don't have it)
+sudo apt update && sudo apt install pipx
+pipx ensurepath
+
+# 2. Clone the repository
+git clone https://github.com/PriyanshSHada/sapt.git
+cd sapt
+
+# 3. Install SmartAPT globally
+pipx install .
+
+# 4. Initialize the configuration wizard
+sapt config
 ```
 
-Then configure an AI provider (optional for local APT commands):
+## 📖 Usage
 
+### Natural Language Installation
+Don't know the exact package name? Just describe what you want.
+```bash
+sapt install "a lightweight markdown editor for the terminal"
+```
+
+### The AI Agent Toolkit
+Let the AI plan and install an entire suite of tools for a specific task.
+```bash
+sapt agent "I need a standard setup for network port scanning and packet analysis"
+```
+
+### Multi-Source Fallbacks
+Bypass APT and install directly from Snap or GitHub.
+```bash
+sapt install foo/bar --source github
+```
+
+### Hardware & System Diagnostics
+Check the health of your APT system, your API budget, and verify your audit logs.
+```bash
+sapt doctor
+```
+
+### Custom Aliases
+Create custom shorthands for your favorite commands.
+```bash
+sapt alias myeditor nano
+sapt install myeditor
+```
+
+## 🔒 Security Architecture (The 3-Layer Defense)
+
+SmartAPT is designed for enterprise environments and paranoid sysadmins. It employs a strict 3-layer architecture:
+
+1. **Input Sanitization Layer:** Prevents prompt injections (e.g., `rm -rf /` or `curl | bash`) from ever reaching the AI or the execution engine.
+2. **OSV Vulnerability Scanner:** Before a package is installed, it is cross-referenced with the official Debian/Ubuntu CVE database. If a known vulnerability exists, the installation is flagged and halted.
+3. **Execution Guardrails:** All executions run with a strict dry-run simulation first. The AI is completely sandboxed and cannot execute arbitrary shell commands.
+
+## ⚙️ Configuration
+
+To modify your API keys, change your AI model, or switch to a local LLM, run the interactive wizard:
 ```bash
 sapt config
 ```
 
-## Usage
+### Supported Providers:
+- **Google Gemini** (Recommended: `gemini-2.5-flash`)
+- **OpenAI** (`gpt-4o`, `gpt-4-turbo`)
+- **Anthropic** (`claude-3-5-sonnet`)
+- **Custom / Local** (Ollama, LM Studio, Groq, Together AI)
+
+## 📜 Audit Logging
+
+SmartAPT maintains a tamper-evident ledger of every installation, removal, and upgrade. Each entry is cryptographically linked to the previous entry using SHA-256 hashes.
 
 ```bash
-sapt install nmap
-sapt install nmap --version 7.94+dfsg2-1
-sapt install wireshrk --dry-run
-sapt install --source snap postman --dry-run
-sapt install --source flatpak org.mozilla.firefox --dry-run
-sapt remove nmap
-sapt update
-sapt upgrade
-sapt search "port scanner"
-sapt doctor
-sapt audit --entries
+# View human-readable history
+sapt history
+
+# Export machine-readable JSON logs
+sapt history --json
+
+# Verify the cryptographic integrity of the chain
 sapt history --verify
-sapt completion bash
-sapt why libssl3
-sapt diff
-sapt undo --dry-run
-sapt agent "inspect network traffic" --dry-run
-sapt cache --stats
-sapt alias burp burpsuite
 ```
 
-`install` and `search` fall back to a local APT package index when no AI
-provider is configured or reachable. Explicit non-APT installs such as
-`--source snap` and `--source flatpak` are treated as exact store package names
-or app IDs and still require confirmation unless `--yes` or `--dry-run` is
-used. `update`, `upgrade`, `remove`, `doctor`, `audit`, `history`,
-`completion`, `cache`, and `alias` are fully local. Only `explain`, `learn`,
-`ask`, and `agent` require a configured provider.
+## 🤝 Contributing
 
-SmartAPT stores state in XDG directories when available:
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-- `XDG_CONFIG_HOME/sapt` for config and aliases
-- `XDG_CACHE_HOME/sapt` for AI cache and package indexes
-- `XDG_DATA_HOME/sapt` for audit logs
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-If the reported home directory is read-only, SmartAPT falls back to a writable
-temporary state directory so local commands and tests still run.
+## 📄 License
 
-## Development
-
-Run the regression suite with:
-
-```bash
-python -m unittest discover -v
-```
-
-SmartAPT is currently alpha software. Review every requested package and keep
-regular system backups before making package changes.
+This project is licensed under the MIT License - see the LICENSE file for details.

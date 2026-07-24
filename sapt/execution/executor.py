@@ -307,10 +307,6 @@ class Executor:
         scanner = VulnerabilityScanner()
         with self.display.spinner(f"Checking OSV CVE database for {package}..."):
             ecosystem = "Debian"
-            if source == "snap":
-                ecosystem = "Snap"
-            elif source == "github":
-                ecosystem = "GitHub"
             cve_report = scanner.scan(
                 package,
                 version=resolution.version,
