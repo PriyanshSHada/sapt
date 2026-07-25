@@ -7,6 +7,7 @@
     <a href="https://github.com/PriyanshSHada/sapt/releases"><img src="https://img.shields.io/github/v/release/PriyanshSHada/sapt?style=flat-square" alt="Release"></a>
     <a href="https://www.python.org/"><img src="https://img.shields.io/badge/Python-3.10+-blue.svg?style=flat-square" alt="Python 3.10+"></a>
     <a href="https://github.com/PriyanshSHada/sapt/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-MIT-green.svg?style=flat-square" alt="License"></a>
+    <a href="https://github.com/PriyanshSHada/sapt/actions/workflows/ci.yml"><img src="https://github.com/PriyanshSHada/sapt/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   </p>
 </div>
 
@@ -20,7 +21,7 @@ Instead of hunting for package names on StackOverflow, just ask SmartAPT what yo
 
 <div align="center">
   <a href="https://www.dropbox.com/scl/fi/4tgkoiah5jq4od9t6juuh/SmartApt-Tutorial-Video.mp4?rlkey=a6s8t0yns8twxq9miiywyjwuu&st=yg7keb6x&dl=0">
-    <img src="thumbnail.png" alt="SmartAPT Tutorial Video" width="800" />
+    <img src="https://raw.githubusercontent.com/PriyanshSHada/sapt/main/thumbnail.png" alt="SmartAPT Tutorial Video" width="800" />
   </a>
 </div>
 

@@ -38,8 +38,18 @@ dependencies = [
 sapt = "sapt.__main__:main"
 
 [project.urls]
-Homepage = "https://github.com/priyansh/sapt"
-Repository = "https://github.com/priyansh/sapt"
+Homepage = "https://github.com/PriyanshSHada/sapt"
+Repository = "https://github.com/PriyanshSHada/sapt"
+Issues = "https://github.com/PriyanshSHada/sapt/issues"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "mypy>=1.0.0",
+    "flake8>=7.0.0",
+    "pytest-typeguard",
+    "types-requests",
+]
 
 [tool.setuptools.packages.find]
 where = ["."]
