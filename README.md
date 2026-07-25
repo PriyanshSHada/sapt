@@ -16,6 +16,14 @@ SmartAPT (`sapt`) is a next-generation wrapper for APT that introduces natural l
 
 Instead of hunting for package names on StackOverflow, just ask SmartAPT what you want to do.
 
+## 📺 Tutorial Video
+
+<div align="center">
+  <a href="https://www.dropbox.com/scl/fi/4tgkoiah5jq4od9t6juuh/SmartApt-Tutorial-Video.mp4?rlkey=a6s8t0yns8twxq9miiywyjwuu&st=yg7keb6x&dl=0">
+    <img src="thumbnail.png" alt="SmartAPT Tutorial Video" width="800" />
+  </a>
+</div>
+
 ## ✨ Features
 
 - 🤖 **AI-Driven Resolution:** Install packages using natural language (`sapt install "a good python web framework"`).
