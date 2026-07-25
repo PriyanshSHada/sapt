@@ -143,8 +143,10 @@ class Executor:
         with self.display.spinner(f"Checking OSV CVE database for {package}..."):
             cve_report = scanner.scan(package, version=version)
         if not cve_report.ok:
+            cve_status = "lookup failed"
             self.display.warning(f"CVE lookup failed: {cve_report.error}")
         elif cve_report.vulnerable:
+            cve_status = f"{len(cve_report.vulnerabilities)} CVEs found"
             self.display.warning(
                 f"[bold red]⚠️ Found {len(cve_report.vulnerabilities)} "
                 f"known vulnerability(ies) for {package}:[/]"
@@ -155,6 +157,8 @@ class Executor:
                 self.display.warning(
                     f"  - ... and {len(cve_report.vulnerabilities) - 3} more."
                 )
+        else:
+            cve_status = "no known CVEs"
         self.display.console.print()
 
         # Dry run — stop here
@@ -189,6 +193,7 @@ class Executor:
                 tier=resolution.trust_tier,
                 size=size,
                 version=version,
+                cve_status=cve_status,
                 display=self.display,
             )
             if not confirmed:
@@ -318,8 +323,10 @@ class Executor:
                 ecosystem=ecosystem,
             )
         if not cve_report.ok:
+            cve_status = "lookup failed"
             self.display.warning(f"CVE lookup failed: {cve_report.error}")
         elif cve_report.vulnerable:
+            cve_status = f"{len(cve_report.vulnerabilities)} CVEs found"
             self.display.warning(
                 f"[bold red]⚠️ Found {len(cve_report.vulnerabilities)} "
                 f"known vulnerability(ies) for {package}:[/]"
@@ -330,6 +337,8 @@ class Executor:
                 self.display.warning(
                     f"  - ... and {len(cve_report.vulnerabilities) - 3} more."
                 )
+        else:
+            cve_status = "no known CVEs"
         self.display.console.print()
 
         sudo_prefix = "sudo " if source == "snap" else ""
@@ -387,6 +396,7 @@ class Executor:
                 tier=resolution.trust_tier,
                 size=resolution.size or "unknown",
                 version=resolution.version or "store latest",
+                cve_status=cve_status,
                 display=self.display,
             )
             if not confirmed:
