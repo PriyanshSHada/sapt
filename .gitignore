@@ -37,3 +37,12 @@ venv.bak/
 /run_20_tests.sh
 /scratch.py
 /error.log
+
+# Internal planning and reports (keep local only)
+ARCHITECTURAL_ANALYSIS.md
+FINAL_REPORT.md
+IMPROVEMENTS_SUMMARY.md
+DEVELOPMENT_LOG.md
+IMPLEMENTATION_PLAN.md
+SUGGESTIONS.md
+smartapt_tutorial.mp4
