@@ -10,7 +10,7 @@ readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
 authors = [
-    {name = "Priyansh"},
+    {name = "Priyansh Singh Hada", email = "priyanshsinghhada@gmail.com"},
 ]
 keywords = ["package-manager", "linux", "ai", "security", "apt"]
 classifiers = [
