@@ -1,4 +1,5 @@
 <div align="center">
+  <img src="https://raw.githubusercontent.com/PriyanshSHada/sapt/main/logo.png" alt="SmartAPT Logo" width="250"/>
   <h1>🧠 SmartAPT</h1>
   <p><strong>The AI-Powered, Security-First Package Manager for Debian/Ubuntu</strong></p>
   
