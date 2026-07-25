@@ -74,16 +74,15 @@ class BaseProvider(ABC):
         # Try to find JSON object or array in the text
         start_obj = text.find("{")
         end_obj = text.rfind("}") + 1
-        
+
         start_arr = text.find("[")
         end_arr = text.rfind("]") + 1
-        
         if start_obj != -1 and end_obj > start_obj:
             try:
                 return json.loads(text[start_obj:end_obj])
             except json.JSONDecodeError:
                 pass
-                
+
         if start_arr != -1 and end_arr > start_arr:
             try:
                 return json.loads(text[start_arr:end_arr])
@@ -249,7 +248,7 @@ class GeminiProvider(BaseProvider):
         # Gemini uses URL-based auth and a different endpoint structure
         url = f"{self.endpoint}{self.model}:generateContent?key={self.api_key}"
 
-        payload = {
+        payload: dict = {
             "system_instruction": {
                 "parts": [{"text": system_prompt}],
             },
@@ -324,7 +323,7 @@ def get_provider(config: dict) -> BaseProvider:
 
     # Known provider
     if provider_key in _PROVIDER_MAP:
-        return _PROVIDER_MAP[provider_key](config)
+        return _PROVIDER_MAP[provider_key](config)  # type: ignore[abstract]
 
     # Custom provider — route by format
     if api_format == "anthropic":

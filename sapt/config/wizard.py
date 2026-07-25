@@ -92,7 +92,9 @@ class SetupWizard:
         self.config_manager.save(config)
         self.display.console.print()
         self.display.success(
-            f"Config saved to [dim]{self.config_manager.exists() and '~/.config/sapt/config.json'}[/]"
+            f"Config saved to [dim]"
+            f"{self.config_manager.exists() and '~/.config/sapt/config.json'}"
+            "[/]"
         )
         self.display.console.print()
         self.display.info("You're all set! Try: [bold]sapt install nmap[/]")

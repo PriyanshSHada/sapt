@@ -159,7 +159,9 @@ class AptBackend:
             check: Whether to raise on non-zero exit code.
         """
         if sudo:
-            cmd = ["sudo"] + cmd
+            # Use -n (non-interactive) to prevent hanging on password prompts
+            # Fail immediately if password needed rather than blocking indefinitely
+            cmd = ["sudo", "-n"] + cmd
 
         try:
             result = subprocess.run(
@@ -169,13 +171,23 @@ class AptBackend:
                 timeout=300,  # 5 minute timeout
             )
             if check and result.returncode != 0:
+                # Check for sudo-specific errors
+                stderr = result.stderr.strip()
+                if "sudo: a password is required" in stderr or result.returncode == 1:
+                    raise AptError(
+                        "Sudo requires a password but running non-interactively. "
+                        "Please configure passwordless sudo for apt commands, or "
+                        "run 'sudo apt update' manually."
+                    )
                 raise AptError(
                     f"Command failed: {' '.join(cmd)}\n"
                     f"Exit code: {result.returncode}\n"
-                    f"Error: {result.stderr.strip()}"
+                    f"Error: {stderr}"
                 )
             return result
         except subprocess.TimeoutExpired:
-            raise AptError(f"Command timed out: {' '.join(cmd)}")
+            raise AptError(
+                f"Command timed out (exceeded 5 minutes): {' '.join(cmd)}"
+            )
         except FileNotFoundError:
             raise AptError(f"Command not found: {cmd[0]}")

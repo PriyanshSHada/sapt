@@ -146,7 +146,8 @@ class Executor:
             self.display.warning(f"CVE lookup failed: {cve_report.error}")
         elif cve_report.vulnerable:
             self.display.warning(
-                f"[bold red]⚠️ Found {len(cve_report.vulnerabilities)} known vulnerability(ies) for {package}:[/]"
+                f"[bold red]⚠️ Found {len(cve_report.vulnerabilities)} "
+                f"known vulnerability(ies) for {package}:[/]"
             )
             for vuln in cve_report.vulnerabilities[:3]:
                 self.display.warning(f"  - {vuln.id} ({vuln.severity})")
@@ -171,7 +172,10 @@ class Executor:
         # Confirm
         if not auto_yes:
             if not is_interactive():
-                message = "Confirmation required in a non-interactive session. Use --yes or --dry-run."
+                message = (
+                    "Confirmation required in a non-interactive session."
+                    " Use --yes or --dry-run."
+                )
                 self.display.error(message)
                 return ExecutionResult(
                     success=False,
@@ -252,6 +256,7 @@ class Executor:
         package = resolution.package
         source = resolution.source
 
+        backend: SnapBackend | FlatpakBackend | GithubBackend
         if source == "snap":
             backend = SnapBackend()
         elif source == "github":
@@ -316,7 +321,8 @@ class Executor:
             self.display.warning(f"CVE lookup failed: {cve_report.error}")
         elif cve_report.vulnerable:
             self.display.warning(
-                f"[bold red]⚠️ Found {len(cve_report.vulnerabilities)} known vulnerability(ies) for {package}:[/]"
+                f"[bold red]⚠️ Found {len(cve_report.vulnerabilities)} "
+                f"known vulnerability(ies) for {package}:[/]"
             )
             for vuln in cve_report.vulnerabilities[:3]:
                 self.display.warning(f"  - {vuln.id} ({vuln.severity})")
@@ -363,7 +369,10 @@ class Executor:
 
         if not auto_yes:
             if not is_interactive():
-                message = "Confirmation required in a non-interactive session. Use --yes or --dry-run."
+                message = (
+                    "Confirmation required in a non-interactive session."
+                    " Use --yes or --dry-run."
+                )
                 self.display.error(message)
                 return ExecutionResult(
                     success=False,
@@ -476,7 +485,10 @@ class Executor:
 
         if not auto_yes:
             if not is_interactive():
-                message = "Confirmation required in a non-interactive session. Use --yes or --dry-run."
+                message = (
+                    "Confirmation required in a non-interactive session."
+                    " Use --yes or --dry-run."
+                )
                 self.display.error(message)
                 return ExecutionResult(
                     success=False,

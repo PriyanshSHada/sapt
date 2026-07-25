@@ -85,7 +85,7 @@ FORBIDDEN_CHARS = (";", "&&", "||", "|", ">", "<", ">>", "`", "$(", "${")
 VALID_PKG_NAME_PATTERN = r"^[a-z0-9][a-z0-9.+\-]{0,127}$"
 
 # ── Provider Configurations ──────────────────────────────────────
-PROVIDER_CONFIGS = {
+PROVIDER_CONFIGS: dict[str, dict] = {
     "anthropic": {
         "name": "Claude (Anthropic)",
         "models": [

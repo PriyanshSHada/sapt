@@ -67,7 +67,9 @@ class VulnerabilityScanner:
         version: str = "",
         ecosystem: str = "Debian",
     ) -> VulnerabilityReport:
-        payload = {"package": {"name": package, "ecosystem": ecosystem}}
+        payload: dict = {
+            "package": {"name": package, "ecosystem": ecosystem}
+        }
         if version:
             payload["version"] = version
 

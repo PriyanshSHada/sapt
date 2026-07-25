@@ -6,6 +6,7 @@ Run with: python -m sapt or just 'sapt' after pip install.
 
 import sys
 import json
+import logging
 
 from sapt.cli import parse_args
 from sapt.ui.display import Display
@@ -15,6 +16,7 @@ from sapt.config.wizard import run_wizard
 from sapt.security.audit import AuditLogger
 from sapt.utils.system import ensure_directories
 from sapt.utils.constants import PROVIDER_CONFIGS
+from sapt.utils.logger import setup_logging
 
 
 def main():
@@ -26,6 +28,11 @@ def main():
         no_color=getattr(args, "no_color", False),
         quiet=getattr(args, "json", False),
     )
+
+    # Configure logging (DEBUG if --verbose, else INFO)
+    log_level = logging.DEBUG if getattr(args, "verbose", False) else logging.INFO
+    logger = setup_logging(level=log_level)
+    logger.info(f"SmartAPT starting (verbose: {log_level == logging.DEBUG})")
 
     try:
         # Config command doesn't need AI setup
@@ -46,36 +53,47 @@ def main():
             if config_mgr.exists():
                 try:
                     config = config_mgr.load()
-                except ValueError:
+                except ValueError as e:
                     # Native and offline-capable commands do not depend on a
                     # healthy AI configuration.
-                    pass
+                    logger.debug(f"Config load skipped (offline mode): {e}")
         elif not config_mgr.exists():
             display.banner()
             display.info("First time? Let's set up your AI provider.\n")
             config = run_wizard()
             if config is None:
                 display.error("Setup cancelled. Run 'sapt config' to try again.")
+                logger.info("Setup cancelled by user")
                 return 1
+            logger.info(f"AI provider configured: {config.get('provider')}")
         else:
             try:
                 config = config_mgr.load()
+                logger.debug(f"Config loaded for provider: {config.get('provider')}")
             except (ValueError, FileNotFoundError) as e:
                 display.error(str(e))
+                logger.error(f"Failed to load config: {e}")
                 return 1
 
         # Dispatch to command handler
         handler = COMMAND_HANDLERS.get(args.command)
         if handler:
+            logger.info(f"Executing command: {args.command}")
             return handler(args, config, display)
         else:
             display.error(f"Unknown command: {args.command}")
+            logger.error(f"Unknown command: {args.command}")
             return 1
 
     except KeyboardInterrupt:
         display.console.print("\n")
         display.warning("Interrupted by user.")
+        logger.info("Interrupted by user")
         return 130
+    except Exception as e:
+        display.error(f"Unexpected error: {e}")
+        logger.exception("Unexpected error")
+        return 1
 
 
 # ── Command Handlers ─────────────────────────────────────────────
@@ -540,7 +558,10 @@ def handle_doctor(args, config, display):
 
     usage = UsageTracker().monthly_summary()
     budget = float(config.get("monthly_budget_usd") or 0.0) if config else 0.0
-    usage_detail = f"{usage['calls']} calls, ${usage['estimated_spend_usd']:.4f} estimated this month"
+    usage_detail = (
+        f"{usage['calls']} calls, "
+        f"${usage['estimated_spend_usd']:.4f} estimated this month"
+    )
     if budget > 0:
         usage_detail += f" / ${budget:.4f} budget"
     checks["AI usage budget"] = {
@@ -1063,7 +1084,11 @@ def handle_completion(args, config, display):
         "agent": "--dry-run --yes -y",
         "cache": "--stats --clear",
         "alias": "--remove --list",
-        "config": "--show --set-provider --set-model --set-key --set-endpoint --set-budget --set-call-cost --usage --reset --json",
+        "config": (
+            "--show --set-provider --set-model --set-key"
+            " --set-endpoint --set-budget --set-call-cost"
+            " --usage --reset --json"
+        ),
     }
     script = _completion_script(args.shell, commands, options)
     sys.stdout.write(script)

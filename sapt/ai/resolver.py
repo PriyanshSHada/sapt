@@ -48,7 +48,7 @@ class PackageResolver:
         self.cache = cache or ResponseCache()
         self.fuzzy = fuzzy or FuzzyMatcher()
         self.usage = usage or UsageTracker()
-        self._provider = None
+        self._provider: BaseProvider | None = None
         # An empty config is a supported offline mode.  Do not attempt to
         # construct a provider until one has actually been configured.
         self._ai_available = bool(config.get("provider"))
@@ -95,24 +95,24 @@ class PackageResolver:
                 result.notes = decision.message or result.notes
                 return result
             try:
-                result = self._call_ai(cleaned, command)
+                ai_result: dict | None = self._call_ai(cleaned, command)
                 self.usage.record(
                     provider=self.config.get("provider", "unknown"),
                     model=self.config.get("model", "unknown"),
                     command=command,
                     user_input=cleaned,
-                    success=bool(result),
+                    success=bool(ai_result),
                     estimated_cost=estimated_cost,
                 )
-                if result:
-                    self.cache.set(command, cleaned, result)
+                if ai_result:
+                    self.cache.set(command, cleaned, ai_result)
                     return PackageResolution(
-                        package=result["package"],
-                        source=result["source"],
-                        confidence=result["confidence"],
-                        alternatives=result.get("alternatives", []),
-                        notes=result.get("notes", ""),
-                        trust_tier=self._source_to_tier(result["source"]),
+                        package=ai_result["package"],
+                        source=ai_result["source"],
+                        confidence=ai_result["confidence"],
+                        alternatives=ai_result.get("alternatives", []),
+                        notes=ai_result.get("notes", ""),
+                        trust_tier=self._source_to_tier(ai_result["source"]),
                     )
             except ProviderError:
                 self.usage.record(
