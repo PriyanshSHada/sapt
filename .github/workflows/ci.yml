@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
 
     steps:
       - uses: actions/checkout@v4
@@ -34,6 +34,6 @@ jobs:
         run: |
           mypy sapt
 
-      - name: Run tests
+      - name: Run tests with coverage
         run: |
-          pytest -v
+          pytest -v --cov=sapt --cov-report=term-missing --cov-fail-under=70

@@ -108,6 +108,82 @@ class AptBackend:
                 packages.append({"name": name.strip(), "description": desc.strip()})
         return packages[:20]  # Limit results
 
+    def get_all_versions(self, package: str) -> list[dict]:
+        """Get all available versions of a package."""
+        result = self._run(["apt-cache", "policy", package], sudo=False, check=False)
+        if result.returncode != 0:
+            return []
+        
+        versions = []
+        current_version = self.get_version(package)
+        candidate_version = self.get_available_version(package)
+        
+        # Parse policy output to get all versions
+        lines = result.stdout.splitlines()
+        for line in lines:
+            if "Candidate:" in line:
+                candidate = line.split(":", 1)[1].strip()
+                if candidate:
+                    versions.append({
+                        "version": candidate,
+                        "source": "apt",
+                        "candidate": True,
+                    })
+        
+        return versions
+
+    def get_candidate_version(self, package: str) -> str | None:
+        """Get the candidate version for upgrade."""
+        return self.get_available_version(package)
+
+    def is_version_available(self, package: str, version: str) -> bool:
+        """Check if a specific version is available."""
+        # Get the package info
+        result = self._run(["apt-cache", "show", package], sudo=False, check=False)
+        if result.returncode != 0:
+            return False
+        
+        # Check if the version is listed in the available versions
+        for line in result.stdout.splitlines():
+            if line.startswith("Version:"):
+                available_version = line.split(":", 1)[1].strip()
+                if available_version == version:
+                    return True
+        
+        return False
+
+    def pin_package(self, package: str, version: str) -> None:
+        """Pin a package to a specific version."""
+        import os
+        os.makedirs("/etc/apt/preferences.d", exist_ok=True)
+        
+        pin_file = f"/etc/apt/preferences.d/{package}"
+        pin_content = f"""Package: {package}
+Pin: version {version}
+Pin-Priority: 1001
+"""
+        
+        try:
+            with open(pin_file, "w") as f:
+                f.write(pin_content)
+        except PermissionError:
+            raise Exception(
+                "Permission denied. Try running with sudo to pin packages."
+            )
+
+    def unpin_package(self, package: str) -> None:
+        """Remove a pin from a package."""
+        import os
+        pin_file = f"/etc/apt/preferences.d/{package}"
+        
+        try:
+            if os.path.exists(pin_file):
+                os.remove(pin_file)
+        except PermissionError:
+            raise Exception(
+                "Permission denied. Try running with sudo to unpin packages."
+            )
+
     def show(self, package: str) -> dict:
         """Get detailed info about a package."""
         result = self._run(["apt-cache", "show", package], sudo=False, check=False)

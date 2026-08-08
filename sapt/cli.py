@@ -68,6 +68,12 @@ def build_parser() -> argparse.ArgumentParser:
             help=argparse.SUPPRESS,
         )
 
+    # list
+    p_list = sub.add_parser("list", help="List packages installed by sapt")
+    add_local_json_flag(p_list)
+    p_list.add_argument("--source", choices=["apt", "snap", "flatpak", "github"], help="Filter by source")
+    p_list.add_argument("--vulnerable", action="store_true", help="List packages with known vulnerabilities")
+
     # install
     p_install = sub.add_parser("install", help="Install a package")
     p_install.add_argument("package", nargs="+", help="Package name(s) to install")
@@ -82,6 +88,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_install.add_argument("--version", help="Install this exact APT package version")
     p_install.add_argument(
         "-y", "--yes", action="store_true", help="Skip confirmation prompts"
+    )
+    p_install.add_argument(
+        "--force", action="store_true", help="Override security blocks (like CVSS > 9.0)"
     )
 
     # remove
@@ -230,6 +239,15 @@ def build_parser() -> argparse.ArgumentParser:
     config_group.add_argument(
         "--reset", action="store_true", help="Delete config, fresh setup"
     )
+
+    # version
+    p_version = sub.add_parser("version", help="Manage package versions")
+    add_local_json_flag(p_version)
+    p_version.add_argument("package", nargs="?", help="Package to inspect or manage")
+    p_version.add_argument("--list", action="store_true", help="List all available versions")
+    p_version.add_argument("--show", action="store_true", help="Show current version")
+    p_version.add_argument("--pin", metavar="VERSION", help="Pin package to specific version")
+    p_version.add_argument("--unpin", action="store_true", help="Unpin package")
 
     return parser
 

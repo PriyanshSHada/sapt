@@ -137,29 +137,48 @@ class Executor:
         )
 
         # CVE Scan
-        from sapt.security.vulnerabilities import VulnerabilityScanner
-
+        from sapt.security.vulnerabilities import VulnerabilityScanner, SEVERITY_THRESHOLDS
         scanner = VulnerabilityScanner()
+        
+        cve_block = False
         with self.display.spinner(f"Checking OSV CVE database for {package}..."):
-            cve_report = scanner.scan(package, version=version)
+            cve_report = scanner.scan(package, version=resolution.version)
+        
         if not cve_report.ok:
             cve_status = "lookup failed"
             self.display.warning(f"CVE lookup failed: {cve_report.error}")
         elif cve_report.vulnerable:
             cve_status = f"{len(cve_report.vulnerabilities)} CVEs found"
-            self.display.warning(
-                f"[bold red]⚠️ Found {len(cve_report.vulnerabilities)} "
-                f"known vulnerability(ies) for {package}:[/]"
-            )
-            for vuln in cve_report.vulnerabilities[:3]:
-                self.display.warning(f"  - {vuln.id} ({vuln.severity})")
-            if len(cve_report.vulnerabilities) > 3:
-                self.display.warning(
-                    f"  - ... and {len(cve_report.vulnerabilities) - 3} more."
+            
+            # Check threshold
+            if cve_report.max_cvss >= SEVERITY_THRESHOLDS["block"]:
+                cve_block = True
+                self.display.error(
+                    f"[bold red]❌ CRITICAL: Found vulnerability with CVSS {cve_report.max_cvss} (>= {SEVERITY_THRESHOLDS['block']})[/]"
                 )
+            elif cve_report.max_cvss >= SEVERITY_THRESHOLDS["warn"]:
+                self.display.warning(
+                    f"[bold yellow]⚠️ WARNING: Found vulnerability with CVSS {cve_report.max_cvss} (>= {SEVERITY_THRESHOLDS['warn']})[/]"
+                )
+            else:
+                self.display.warning(
+                    f"[bold yellow]⚠️ Found {len(cve_report.vulnerabilities)} known vulnerability(ies) for {package}:[/]"
+                )
+
+            for vuln in cve_report.vulnerabilities[:3]:
+                self.display.warning(f"  - {vuln.id} (CVSS: {vuln.cvss_score} | {vuln.severity})")
+            if len(cve_report.vulnerabilities) > 3:
+                self.display.warning(f"  - ... and {len(cve_report.vulnerabilities) - 3} more.")
         else:
             cve_status = "no known CVEs"
+        
         self.display.console.print()
+
+        # If blocked by CVE and not forced, stop
+        if cve_block and not getattr(resolution, "force", False):
+            self.display.error(f"Installation of {package} blocked due to critical CVEs.")
+            self.display.info("Use --force to override this security block.")
+            return ExecutionResult(success=False, package=package, output="Blocked by CVE", command="")
 
         # Dry run — stop here
         if dry_run:
@@ -312,9 +331,11 @@ class Executor:
         )
 
         # CVE Scan
-        from sapt.security.vulnerabilities import VulnerabilityScanner
+        from sapt.security.vulnerabilities import VulnerabilityScanner, SEVERITY_THRESHOLDS
 
         scanner = VulnerabilityScanner()
+        
+        cve_block = False
         with self.display.spinner(f"Checking OSV CVE database for {package}..."):
             ecosystem = "Debian"
             cve_report = scanner.scan(
@@ -322,24 +343,48 @@ class Executor:
                 version=resolution.version,
                 ecosystem=ecosystem,
             )
+            
         if not cve_report.ok:
             cve_status = "lookup failed"
             self.display.warning(f"CVE lookup failed: {cve_report.error}")
         elif cve_report.vulnerable:
             cve_status = f"{len(cve_report.vulnerabilities)} CVEs found"
-            self.display.warning(
-                f"[bold red]⚠️ Found {len(cve_report.vulnerabilities)} "
-                f"known vulnerability(ies) for {package}:[/]"
-            )
-            for vuln in cve_report.vulnerabilities[:3]:
-                self.display.warning(f"  - {vuln.id} ({vuln.severity})")
-            if len(cve_report.vulnerabilities) > 3:
-                self.display.warning(
-                    f"  - ... and {len(cve_report.vulnerabilities) - 3} more."
+            
+            # Check threshold
+            if cve_report.max_cvss >= SEVERITY_THRESHOLDS["block"]:
+                cve_block = True
+                self.display.error(
+                    f"[bold red]❌ CRITICAL: Found vulnerability with CVSS {cve_report.max_cvss} (>= {SEVERITY_THRESHOLDS['block']})[/]"
                 )
+            elif cve_report.max_cvss >= SEVERITY_THRESHOLDS["warn"]:
+                self.display.warning(
+                    f"[bold yellow]⚠️ WARNING: Found vulnerability with CVSS {cve_report.max_cvss} (>= {SEVERITY_THRESHOLDS['warn']})[/]"
+                )
+            else:
+                self.display.warning(
+                    f"[bold yellow]⚠️ Found {len(cve_report.vulnerabilities)} known vulnerability(ies) for {package}:[/]"
+                )
+
+            for vuln in cve_report.vulnerabilities[:3]:
+                self.display.warning(f"  - {vuln.id} (CVSS: {vuln.cvss_score} | {vuln.severity})")
+            if len(cve_report.vulnerabilities) > 3:
+                self.display.warning(f"  - ... and {len(cve_report.vulnerabilities) - 3} more.")
         else:
             cve_status = "no known CVEs"
+        
         self.display.console.print()
+
+        # If blocked by CVE and not forced, stop
+        if cve_block and not getattr(resolution, "force", False):
+            self.display.error(f"Installation of {package} blocked due to critical CVEs.")
+            self.display.info("Use --force to override this security block.")
+            return ExecutionResult(
+                success=False,
+                package=package,
+                command=command,
+                output="Blocked by CVE",
+                source=source,
+            )
 
         sudo_prefix = "sudo " if source == "snap" else ""
         if dry_run:

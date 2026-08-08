@@ -32,6 +32,7 @@ dependencies = [
     "rapidfuzz>=3.0.0",
     "cryptography>=41.0.0",
     "keyring>=24.0.0",
+    "cvss>=2.0.0",
 ]
 
 [project.scripts]
@@ -45,6 +46,7 @@ Issues = "https://github.com/PriyanshSHada/sapt/issues"
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0.0",
+    "pytest-cov>=5.0.0",
     "mypy>=1.0.0",
     "flake8>=7.0.0",
     "types-requests",

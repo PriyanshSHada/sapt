@@ -7,6 +7,11 @@ from dataclasses import dataclass, field
 
 import requests
 
+SEVERITY_THRESHOLDS = {
+    "block": 9.0,    # CVSS 9+ = hard block (override with --force)
+    "warn": 7.0,     # CVSS 7-8.9 = yellow warning
+    "info": 4.0,     # CVSS 4-6.9 = info only
+}
 
 @dataclass
 class Vulnerability:
@@ -15,6 +20,7 @@ class Vulnerability:
     id: str
     summary: str = ""
     severity: str = "unknown"
+    cvss_score: float = 0.0
     details_url: str = ""
 
 
@@ -33,6 +39,10 @@ class VulnerabilityReport:
     def vulnerable(self) -> bool:
         return bool(self.vulnerabilities)
 
+    @property
+    def max_cvss(self) -> float:
+        return max((v.cvss_score for v in self.vulnerabilities), default=0.0)
+
     def to_dict(self) -> dict:
         return {
             "package": self.package,
@@ -46,6 +56,7 @@ class VulnerabilityReport:
                     "id": vuln.id,
                     "summary": vuln.summary,
                     "severity": vuln.severity,
+                    "cvss_score": vuln.cvss_score,
                     "details_url": vuln.details_url,
                 }
                 for vuln in self.vulnerabilities
@@ -106,18 +117,39 @@ class VulnerabilityScanner:
             )
 
         vulns = []
+        has_cvss = False
+        cvss = None
+        try:
+            import cvss
+            has_cvss = True
+        except ImportError:
+            pass
+
         for raw in data.get("vulns", []):
             severity = "unknown"
+            cvss_score = 0.0
             severities = raw.get("severity") or []
             if severities:
-                severity = (
-                    severities[0].get("score") or severities[0].get("type") or "unknown"
-                )
+                for sev in severities:
+                    val = sev.get("score") or sev.get("type") or ""
+                    if val.startswith("CVSS:"):
+                        try:
+                            if has_cvss:
+                                cvss_score = cvss.CVSS3(val).scores()[0]
+                            severity = val
+                        except Exception:
+                            pass
+                if severity == "unknown":
+                    severity = (
+                        severities[0].get("score") or severities[0].get("type") or "unknown"
+                    )
+
             vulns.append(
                 Vulnerability(
                     id=raw.get("id", "unknown"),
                     summary=raw.get("summary", ""),
                     severity=severity,
+                    cvss_score=cvss_score,
                     details_url=raw.get("database_specific", {}).get("url", ""),
                 )
             )

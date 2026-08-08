@@ -288,7 +288,8 @@ class MainDispatchTests(unittest.TestCase):
     def test_doctor_does_not_require_ai_configuration(
         self, parse_args, display_cls, config_manager_cls
     ):
-        from sapt.__main__ import COMMAND_HANDLERS, main
+        from sapt.commands import COMMAND_HANDLERS
+        from sapt.__main__ import main
 
         parse_args.return_value = SimpleNamespace(command="doctor", no_color=False)
         config_manager_cls.return_value.exists.return_value = False
@@ -314,7 +315,7 @@ class LocalCommandTests(unittest.TestCase):
 
     @patch("sapt.execution.apt.AptBackend")
     def test_why_reports_reverse_dependencies(self, apt_backend):
-        from sapt.__main__ import handle_why
+        from sapt.commands.why import handle_why
 
         apt = apt_backend.return_value
         apt.is_installed.return_value = True
@@ -329,7 +330,7 @@ class LocalCommandTests(unittest.TestCase):
 
     @patch("sapt.execution.apt.AptBackend")
     def test_why_json_is_machine_readable(self, apt_backend):
-        from sapt.__main__ import handle_why
+        from sapt.commands.why import handle_why
 
         apt = apt_backend.return_value
         apt.is_installed.return_value = True
@@ -346,9 +347,9 @@ class LocalCommandTests(unittest.TestCase):
         self.assertEqual(json.loads(output.getvalue())["reverse_dependencies"], ["curl"])
 
     @patch("sapt.execution.executor.Executor")
-    @patch("sapt.__main__.AuditLogger")
+    @patch("sapt.commands.undo.AuditLogger")
     def test_undo_reverses_latest_install(self, audit_logger, executor_cls):
-        from sapt.__main__ import handle_undo
+        from sapt.commands.undo import handle_undo
 
         audit = audit_logger.return_value
         audit.get_all.return_value = [
@@ -369,12 +370,12 @@ class LocalCommandTests(unittest.TestCase):
         audit.log.assert_called_once()
 
     @patch("sapt.execution.executor.Executor")
-    @patch("sapt.__main__.AuditLogger")
+    @patch("sapt.commands.agent.AuditLogger")
     @patch("sapt.ai.providers.get_provider")
     def test_agent_only_installs_valid_apt_package_names(
         self, get_provider, audit_logger, executor_cls
     ):
-        from sapt.__main__ import handle_agent
+        from sapt.commands.agent import handle_agent
 
         get_provider.return_value.call.return_value = {
             "tools": [
@@ -397,7 +398,7 @@ class LocalCommandTests(unittest.TestCase):
 
     @patch("sapt.ai.cache.ResponseCache")
     def test_cache_clear_reports_deleted_entries(self, cache_cls):
-        from sapt.__main__ import handle_cache
+        from sapt.commands.cache_cmd import handle_cache
 
         cache_cls.return_value.clear.return_value = 3
         result = handle_cache(
@@ -409,11 +410,11 @@ class LocalCommandTests(unittest.TestCase):
 
     @patch("sapt.config.aliases.AliasManager")
     @patch("sapt.execution.executor.Executor")
-    @patch("sapt.__main__.AuditLogger")
+    @patch("sapt.commands.install.AuditLogger")
     def test_install_with_explicit_snap_source_bypasses_apt_resolution(
         self, audit_logger, executor_cls, alias_manager
     ):
-        from sapt.__main__ import handle_install
+        from sapt.commands.install import handle_install
 
         alias_manager.return_value.resolve.return_value = None
         executor_cls.return_value.install.return_value = SimpleNamespace(success=True)
@@ -421,7 +422,7 @@ class LocalCommandTests(unittest.TestCase):
         result = handle_install(
             SimpleNamespace(
                 package=["postman"], source="snap", version=None,
-                dry_run=True, yes=True,
+                dry_run=True, yes=True, force=False,
             ),
             {},
             MagicMock(),
@@ -433,9 +434,9 @@ class LocalCommandTests(unittest.TestCase):
         self.assertEqual(resolution.source, "snap")
         audit_logger.return_value.log.assert_not_called()
 
-    @patch("sapt.__main__.AuditLogger")
+    @patch("sapt.commands.audit.AuditLogger")
     def test_audit_json_reports_summary(self, audit_logger):
-        from sapt.__main__ import handle_audit
+        from sapt.commands.audit import handle_audit
 
         audit = audit_logger.return_value
         audit.verify_chain.return_value = (True, "ok")
@@ -459,10 +460,10 @@ class LocalCommandTests(unittest.TestCase):
         self.assertEqual(payload["failures"], 1)
         self.assertEqual(payload["entries"], [{"action": "remove"}])
 
-    @patch("sapt.__main__.AuditLogger")
+    @patch("sapt.commands.audit.AuditLogger")
     @patch("sapt.security.vulnerabilities.VulnerabilityScanner")
     def test_audit_cve_json_includes_vulnerability_report(self, scanner_cls, audit_logger):
-        from sapt.__main__ import handle_audit
+        from sapt.commands.audit import handle_audit
 
         audit = audit_logger.return_value
         audit.verify_chain.return_value = (True, "ok")
@@ -484,7 +485,7 @@ class LocalCommandTests(unittest.TestCase):
         self.assertEqual(payload["vulnerabilities"][0]["package"], "openssl")
 
     def test_completion_prints_shell_script(self):
-        from sapt.__main__ import handle_completion
+        from sapt.commands.completion import handle_completion
 
         output = io.StringIO()
         with patch("sys.stdout", output):
